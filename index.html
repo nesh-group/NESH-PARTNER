@@ -2436,6 +2436,11 @@
       <div class="op-mc-row"><b>Phone:</b> <span id="op-oc-phone"></span></div>
       <div class="op-mc-row"><b>Address:</b> <span id="op-oc-address"></span></div>
       <div class="op-mc-row"><b>Device ID:</b> <span id="op-oc-device" style="word-break:break-all;"></span></div>
+      <div style="margin-top:10px;">
+        <p class="op-note" style="margin-bottom:6px;"><b>Items:</b></p>
+        <div id="op-oc-items" style="border:1px solid #334155; border-radius:6px; padding:8px 10px; max-height:160px; overflow-y:auto;"></div>
+        <div class="op-mc-row" id="op-oc-items-total" style="margin-top:6px;"></div>
+      </div>
       <div class="op-mc-row" id="op-oc-block-status" style="margin-top:10px;"></div>
       <div style="margin-top:10px;">
         <p class="op-note" style="margin-bottom:6px;">Message shown to the customer if blocked (also used as the reason):</p>
@@ -2887,6 +2892,15 @@ function stopRinging() {
 // its own Accept/Reject buttons. The popup only closes once ALL pending
 // orders have been actioned (an individual card just drops out of the
 // list the moment its order is accepted or rejected).
+// This shop's own bottom-line total for a NESH Store queue order — sum of
+// each item's shopPrice (falling back to price if somehow missing), the
+// same figure the operator's assignment screen calls "Shop total". Used
+// everywhere the shop sees such an order instead of the customer-facing
+// item prices / platform fee / delivery charge, none of which are the
+// shop's concern.
+function neshStoreOrderShopTotal(order) {
+  return (order.items || []).reduce((s, it) => s + (Number(it.shopPrice != null ? it.shopPrice : it.price) || 0) * (it.qty || 0), 0);
+}
 function renderOrderPopup(pendingList) {
   const overlay = document.getElementById('order-popup-overlay');
   const listEl = document.getElementById('popup-list');
@@ -2906,20 +2920,46 @@ function renderOrderPopup(pendingList) {
     const card = document.createElement('div');
     card.className = "order-popup-card";
 
-    const itemsHtml = (order.items || []).map(it =>
-      `<div class="order-popup-row"><span>${it.qty} × ${it.name}${it.desc ? `<br><span style="color:#8a94a3; font-size:11px;">${it.desc}</span>` : ''}</span><span>₹${it.price * it.qty}</span></div>`
-    ).join('');
-    const feeHtml = order.platformFee ? `<div class="order-popup-row"><span>Platform fee</span><span>₹${order.platformFee}</span></div>` : '';
-    const deliveryHtml = order.deliveryFee ? `<div class="order-popup-row"><span>Delivery charge</span><span>₹${order.deliveryFee}</span></div>` : '';
-
-    card.innerHTML = `
-      <h2 class="order-popup-title">${order.orderNumber || 'New order'}</h2>
-      <div class="order-popup-body">
+    // NESH Store queue orders (assigned via the Operator Panel) show the
+    // shop each item at the shop's OWN rate (shopPrice) — same list style
+    // as a normal order — but no platform fee / delivery charge rows,
+    // since those aren't the shop's concern; the total is the shop's own
+    // sum, not the customer-facing total (see neshStoreOrderShopTotal).
+    let bodyHtml;
+    if (order.fromNeshStoreQueue) {
+      const itemsHtml = (order.items || []).map(it => {
+        const rate = it.shopPrice != null ? it.shopPrice : it.price;
+        return `<div class="order-popup-row"><span>${it.qty} × ${it.name}${it.desc ? `<br><span style="color:#8a94a3; font-size:11px;">${it.desc}</span>` : ''}</span><span>₹${rate * it.qty}</span></div>`;
+      }).join('');
+      bodyHtml = `
+        ${itemsHtml}
+        <div class="order-popup-row order-popup-row-total"><span>Total</span><span>₹${neshStoreOrderShopTotal(order)}</span></div>
+        <div class="order-popup-row"><span>Payment</span><span>${order.paymentMethod || 'Cash on Delivery'}</span></div>
+      `;
+    } else {
+      // `shopPrice` — this shop's own rate for the item, captured at
+      // assignment time for NESH Store queue orders — takes priority over
+      // `price` (the NESH-Store customer price, which has the item markup
+      // baked in) so the shop always sees what they're actually owed.
+      const itemsHtml = (order.items || []).map(it => {
+        const rate = it.shopPrice != null ? it.shopPrice : it.price;
+        return `<div class="order-popup-row"><span>${it.qty} × ${it.name}${it.desc ? `<br><span style="color:#8a94a3; font-size:11px;">${it.desc}</span>` : ''}</span><span>₹${rate * it.qty}</span></div>`;
+      }).join('');
+      const feeHtml = order.platformFee ? `<div class="order-popup-row"><span>Platform fee</span><span>₹${order.platformFee}</span></div>` : '';
+      const deliveryHtml = order.deliveryFee ? `<div class="order-popup-row"><span>Delivery charge</span><span>₹${order.deliveryFee}</span></div>` : '';
+      bodyHtml = `
         ${itemsHtml}
         ${feeHtml}
         ${deliveryHtml}
         <div class="order-popup-row order-popup-row-total"><span>Total</span><span>₹${order.total || 0}</span></div>
         <div class="order-popup-row"><span>Payment</span><span>${order.paymentMethod || 'Cash on Delivery'}</span></div>
+      `;
+    }
+
+    card.innerHTML = `
+      <h2 class="order-popup-title">${order.orderNumber || 'New order'}</h2>
+      <div class="order-popup-body">
+        ${bodyHtml}
       </div>
       <p class="order-popup-cust">${(order.customerName || 'Guest')} · ${(order.customerAddress || '')}</p>
       <div class="order-popup-btns">
@@ -5060,7 +5100,7 @@ function renderHomeOrdersInProgress(list) {
       <p class="order-time">${timeAgo(o.createdAt || Date.now())} · ${itemCount} item${itemCount === 1 ? '' : 's'}</p>
       <div class="order-mid">
         <p class="order-cust">${o.customerName || 'Guest'}</p>
-        <p class="order-total">₹${o.total || 0}</p>
+        <p class="order-total">₹${o.fromNeshStoreQueue ? neshStoreOrderShopTotal(o) : (o.total || 0)}</p>
       </div>
     `;
     btn.addEventListener('click', () => {
@@ -5202,25 +5242,35 @@ function renderOrderDetail(o) {
   const itemsEl = document.getElementById('od-items');
   itemsEl.innerHTML = "";
   (o.items || []).forEach(it => {
+    // Same shop-rate-first rule as the new-order popup — see the comment
+    // there for why.
+    const rate = it.shopPrice != null ? it.shopPrice : it.price;
     const row = document.createElement('div');
     row.className = "item-row";
-    row.innerHTML = `<span>${it.qty} × ${it.name}${it.desc ? `<br><span style="color:#5C574C; font-size:11px;">${it.desc}</span>` : ''}</span><span>₹${it.price * it.qty}</span>`;
+    row.innerHTML = `<span>${it.qty} × ${it.name}${it.desc ? `<br><span style="color:#5C574C; font-size:11px;">${it.desc}</span>` : ''}</span><span>₹${rate * it.qty}</span>`;
     itemsEl.appendChild(row);
   });
-  if (o.platformFee) {
-    const row = document.createElement('div');
-    row.className = "item-row";
-    row.innerHTML = `<span>Platform fee</span><span>₹${o.platformFee}</span>`;
-    itemsEl.appendChild(row);
+  if (o.fromNeshStoreQueue) {
+    // NESH Store queue order: no platform fee / delivery charge rows —
+    // not the shop's concern — and the total is the shop's own sum, not
+    // the customer-facing total. See neshStoreOrderShopTotal.
+    document.getElementById('od-total').textContent = "₹" + neshStoreOrderShopTotal(o);
+  } else {
+    if (o.platformFee) {
+      const row = document.createElement('div');
+      row.className = "item-row";
+      row.innerHTML = `<span>Platform fee</span><span>₹${o.platformFee}</span>`;
+      itemsEl.appendChild(row);
+    }
+    if (o.deliveryFee) {
+      const row = document.createElement('div');
+      row.className = "item-row";
+      const kmNote = o.deliveryDistanceKm ? ` (${o.deliveryDistanceKm} km)` : '';
+      row.innerHTML = `<span>Delivery charge${kmNote}</span><span>₹${o.deliveryFee}</span>`;
+      itemsEl.appendChild(row);
+    }
+    document.getElementById('od-total').textContent = "₹" + (o.total || 0);
   }
-  if (o.deliveryFee) {
-    const row = document.createElement('div');
-    row.className = "item-row";
-    const kmNote = o.deliveryDistanceKm ? ` (${o.deliveryDistanceKm} km)` : '';
-    row.innerHTML = `<span>Delivery charge${kmNote}</span><span>₹${o.deliveryFee}</span>`;
-    itemsEl.appendChild(row);
-  }
-  document.getElementById('od-total').textContent = "₹" + (o.total || 0);
 
   renderAssignBlock(o);
 
@@ -5290,6 +5340,14 @@ async function updateOrderStatus(id, newStatus, orderData) {
     // already shows the order in their job list without needing a ring.
     if (newStatus === 'preparing') notifyCustomerOrderStatus(orderData || {}, id, 'Order confirmed!', (state.restaurant && state.restaurant.name || 'Restaurant') + ' is preparing your order.');
     if (newStatus === 'delivered') notifyCustomerOrderStatus(orderData || {}, id, 'Order delivered!', 'Your order from ' + (state.restaurant && state.restaurant.name || 'the restaurant') + ' has been delivered. Enjoy your meal!');
+    // Swiggy-style "pickup ready" ping to whichever driver already
+    // accepted this delivery (order.deliveryDriverId) — only relevant for
+    // Go Series shops, since only those route to bike delivery boys at
+    // all. A driver who hasn't claimed it yet just sees it via their
+    // normal live job list; nobody to ping directly in that case.
+    if (newStatus === 'ready' && state.restaurant && state.restaurant.goSeries && orderData && orderData.deliveryDriverId) {
+      notifyDriverPickupReady(orderData.deliveryDriverId, id, orderData);
+    }
   } catch (e) {
     alert("Couldn't update order — check your connection and try again.");
   }
@@ -5446,6 +5504,25 @@ function notifyCustomerOrderStatus(o, orderId, title, body) {
       body,
       orderId,
       restId: state.restId,
+    }),
+  }).catch(() => {});
+}
+
+// Fire-and-forget: pings the one driver already assigned to this delivery
+// the moment the shop marks it "ready" — the native-push counterpart to
+// notifyPickupReadyIfNew()'s in-app toast in driver.html, so the driver
+// still gets alerted even if their app is backgrounded or closed.
+function notifyDriverPickupReady(driverId, orderId, o) {
+  fetch('https://broad-paper-6445.raise3715.workers.dev', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'delivery_ready',
+      driverId,
+      orderId,
+      restId: state.restId,
+      restName: state.restaurant && state.restaurant.name,
+      orderNumber: o && o.orderNumber,
     }),
   }).catch(() => {});
 }
@@ -5816,11 +5893,18 @@ function listenDailyEarnings() {
       const status = (o.status || '').toLowerCase();
       if (!qualifying.includes(status)) return;
       if ((o.createdAt || 0) < startOfDay.getTime()) return;
-      // The shop's own sale amount: what the customer paid minus the
-      // platform fee and delivery charge portions of `total` — those go to
-      // the platform/delivery boy, never to the shop — and minus nothing
-      // else, since any shop discount is already netted out of `total`.
-      const earning = Math.max(0, (o.total || 0) - (o.platformFee || 0) - (o.deliveryFee || 0));
+      // The shop's own sale amount: for a NESH Store queue order (assigned
+      // via the Operator Panel), each item carries `shopPrice` — this
+      // shop's own rate, the same figure the assignment screen's "Shop
+      // total" is built from — so the earning is the sum of that, item
+      // markup excluded. Every other order has no `shopPrice` on its
+      // items, so it falls back to the original rule: what the customer
+      // paid minus the platform fee and delivery charge portions of
+      // `total` — those go to the platform/delivery boy, never the shop.
+      const hasShopPrices = (o.items || []).some(it => it.shopPrice != null);
+      const earning = hasShopPrices
+        ? (o.items || []).reduce((s, it) => s + (Number(it.shopPrice != null ? it.shopPrice : it.price) || 0) * (it.qty || 0), 0)
+        : Math.max(0, (o.total || 0) - (o.platformFee || 0) - (o.deliveryFee || 0));
       total += earning;
       count++;
       list.push({ _id: child.key, ...o, _earning: earning });
@@ -7966,17 +8050,40 @@ function opRenderGroceriesQueueList() {
     const pillText = isPending ? 'unassigned' : st;
     const extra = st === 'assigned' && o.assignedShopName ? ' · → ' + escapeHtml(o.assignedShopName) : '';
     const click = isPending ? ` onclick="opOpenGroceriesAssignModal('${o._id}')"` : '';
+    const orderLabel = escapeHtml(String(o.orderNumber || o._id));
     return `
       <div class="op-order-item"${click}${isPending ? '' : ' style="opacity:.85;"'}>
         <div class="op-order-top">
-          <span class="op-order-shop">#${escapeHtml(String(o.orderNumber || o._id))}</span>
-          <span class="op-order-status-pill op-order-status-${pillClass}">${escapeHtml(pillText)}</span>
+          <span class="op-order-shop">#${orderLabel}</span>
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span class="op-order-status-pill op-order-status-${pillClass}">${escapeHtml(pillText)}</span>
+            <button type="button" class="op-btn op-btn-danger" style="padding:2px 8px; font-size:.68rem;" onclick="event.stopPropagation(); opDeleteGroceryOrder('${o._id}', '${orderLabel}')">🗑 Delete</button>
+          </span>
         </div>
         <div class="op-order-sub">${escapeHtml(o.customerName || 'Guest')} · ₹${o.total || 0} · ${itemCount} item${itemCount === 1 ? '' : 's'} · ${timeAgo(o.createdAt || Date.now())}${extra}</div>
       </div>
     `;
   }).join('');
 }
+// Permanently removes one NESH Store order from groceryOrderQueue —
+// unassigned, assigned, or cancelled, any status. Confirms first since
+// this can't be undone (unlike cancelling a shop's own order, there's no
+// "cancelled" state to fall back to here — the record is just gone).
+// Closes the assign modal too if it happened to be open on this exact
+// order, so a stale "Assign" button doesn't sit on screen for a deleted
+// order.
+function opDeleteGroceryOrder(orderId, label) {
+  if (!confirm('Delete order #' + label + '? This cannot be undone.')) return;
+  const { db, ref, remove } = window.fb;
+  remove(ref(db, 'groceryOrderQueue/' + orderId)).then(() => {
+    showToast('Order #' + label + ' deleted');
+    if (opGroceriesAssignOrderId === orderId) {
+      opGroceriesAssignOrderId = null;
+      document.getElementById('op-groceries-assign-modal').classList.remove('show');
+    }
+  }).catch(err => alert('Error deleting order: ' + err.message));
+}
+
 // For a queue order, works out — per candidate shop — how much of the
 // order that shop can actually cover, what it'd cost at that shop's own
 // prices, and the profit (what the customer is being charged for those
@@ -8110,7 +8217,20 @@ async function opAssignGroceryOrder(orderId, shopId) {
       customerPlace: order.customerPlace,
       customerLandmark: order.customerLandmark,
       customerDeviceId: order.customerDeviceId,
-      items: order.items.map(it => ({ name: it.name, desc: it.desc || '', price: it.price, qty: it.qty, unit: it.unit })),
+      items: order.items.map(it => {
+        // Carry along this specific shop's own per-item rate (the same
+        // number the "Shop total" above is built from) as `shopPrice`,
+        // alongside `price` (still the NESH Store price the customer
+        // actually paid) — so the shop's own screens (new-order popup,
+        // order detail, daily earnings) can show/count the shop's own
+        // rate instead of the NESH-Store-displayed price with the item
+        // markup baked in.
+        const opt = (it.shopOptions || []).find(o => o.shopId === shopId);
+        return {
+          name: it.name, desc: it.desc || '', price: it.price, qty: it.qty, unit: it.unit,
+          ...(opt ? { shopPrice: Number(opt.price) || 0 } : {}),
+        };
+      }),
       total: order.total,
       platformFee: order.platformFee,
       platformDue: order.platformFee,
@@ -8134,6 +8254,11 @@ async function opAssignGroceryOrder(orderId, shopId) {
     // Same fire-and-forget shop alert the customer app sends at normal
     // order placement — since this order is only reaching a real shop now
     // (at assignment time, not at checkout time), it has to be sent here.
+    // totalAmount here must be the SHOP's own total (orderPayload.items,
+    // which already carry shopPrice) — same figure the in-app popup/detail
+    // screens show — not the customer-facing order.total, or the native
+    // notification would show the wrong amount.
+    const shopTotalForAlert = orderPayload.items.reduce((s, it) => s + (Number(it.shopPrice != null ? it.shopPrice : it.price) || 0) * (it.qty || 0), 0);
     fetch('https://broad-paper-6445.raise3715.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -8145,7 +8270,7 @@ async function opAssignGroceryOrder(orderId, shopId) {
         customerName: order.customerName,
         customerPhone: order.customerPhone,
         customerAddress: order.customerLocation || order.customerAddress || '',
-        totalAmount: order.total,
+        totalAmount: shopTotalForAlert,
       }),
     }).catch(() => {});
 
@@ -9781,6 +9906,21 @@ function opOpenOrderCustomer(shopId, orderId) {
   document.getElementById('op-oc-phone').textContent = opCurrentOrderCustomer.phone || '—';
   document.getElementById('op-oc-address').textContent = o.customerAddress || o.customerLocation || '—';
   document.getElementById('op-oc-device').textContent = opCurrentOrderCustomer.deviceId || '—';
+  const itemsEl = document.getElementById('op-oc-items');
+  const items = o.items || [];
+  itemsEl.innerHTML = items.length
+    ? items.map(it => `
+        <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dashed #334155; font-size:.82rem;">
+          <span>${it.qty || 1} × ${escapeHtml(it.name || 'Item')}${it.desc ? `<br><span style="color:#94a3b8; font-size:.75rem;">${escapeHtml(it.desc)}</span>` : ''}</span>
+          <span style="white-space:nowrap; margin-left:10px;">₹${(it.price || 0) * (it.qty || 1)}</span>
+        </div>
+      `).join('')
+    : '<span class="op-note">No item details on this order.</span>';
+  const totalBits = [];
+  if (o.platformFee) totalBits.push('Platform fee: ₹' + o.platformFee);
+  if (o.deliveryFee) totalBits.push('Delivery: ₹' + o.deliveryFee);
+  totalBits.push('Total: ₹' + (o.total || 0));
+  document.getElementById('op-oc-items-total').innerHTML = '<b>' + totalBits.join(' · ') + '</b>';
   document.getElementById('op-oc-message').value = '';
   document.getElementById('op-oc-status').textContent = '';
   const modal = document.getElementById('op-order-customer-modal');
