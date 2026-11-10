@@ -719,6 +719,22 @@
   /* Cancelled tab turns red when selected */
   #operator-container .op-order-tab[data-tab="cancelled"].active{ background:#dc2626; border-color:#dc2626; color:#fff; }
 </style>
+<style id="pvchat-css">
+#pvchat-fab .pvc-n{ position:absolute; top:-4px; right:-4px; min-width:20px; height:20px; padding:0 5px; border-radius:99px; background:var(--chili); color:#fff; font:700 11px/20px Inter,sans-serif; text-align:center; display:none; }
+#pvchat-fab .pvc-n.show{ display:block; }
+#pvchat-container{ display:none; position:fixed; inset:0; z-index:6000; background:#0B1622; flex-direction:column; }
+#pvchat-container.show{ display:flex; }
+#pvchat-thread{ display:none; flex:1; flex-direction:column; min-height:0; }
+#pvchat-container.in-thread #pvchat-thread{ display:flex; }
+#pvchat-container.in-thread #pvchat-list{ display:none; }
+.pvc-conv{ display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--field-border); border-radius:12px; background:var(--field-bg); color:var(--cloud); cursor:pointer; margin-bottom:8px; font-family:'Inter',sans-serif; }
+.pvc-conv .nm{ font-weight:700; font-size:.92rem; } .pvc-conv .lt{ font-size:.78rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:230px; }
+.pvc-conv .bd{ margin-left:auto; min-width:22px; height:22px; border-radius:99px; background:var(--chili); color:#fff; font:700 12px/22px Inter,sans-serif; text-align:center; padding:0 6px; }
+.pvc-vplay{ border:0; border-radius:999px; padding:8px 14px; background:var(--marigold); color:#fff; font:700 .8rem 'Inter',sans-serif; cursor:pointer; }
+.pvc-ordercard{ align-self:flex-start; max-width:88%; background:#10263d; border:1.5px solid var(--marigold); border-radius:12px; padding:10px 12px; color:var(--cloud); font:500 .82rem/1.4 'Inter',sans-serif; margin-bottom:6px; }
+.pvc-ordercard b{ display:block; font-size:.9rem; margin-bottom:3px; }
+.pvc-ordercard button{ margin-top:8px; width:100%; border:0; border-radius:8px; padding:9px; background:var(--marigold); color:#fff; font:700 .8rem 'Inter',sans-serif; cursor:pointer; }
+</style>
 </head>
 <body>
 
@@ -886,6 +902,7 @@
         <input id="reg-shop-category" type="text" list="shop-category-suggestions" placeholder="What kind of shop? e.g. Mobile Shop, Sports" maxlength="24" />
       </div>
       <datalist id="shop-category-suggestions">
+        <option value="Pravasi Hampers">
         <option value="Mobile Shop">
         <option value="Sports">
       </datalist>
@@ -910,7 +927,7 @@
       </div>
       <div class="field">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F80ED" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
-        <input id="reg-username" type="text" placeholder="Choose a username" autocomplete="off" />
+        <input id="reg-username" type="text" placeholder="Choose a username (small letters, numbers)" autocomplete="off" autocapitalize="none" />
       </div>
       <div class="field">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F80ED" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -1759,6 +1776,35 @@
   </div>
 </div>
 
+<!-- PRAVASI SHOP: customer chats (only visible for Pravasi Hampers shops) -->
+<button class="support-fab" id="pvchat-fab" style="right:calc(50% - 210px + 84px); background:#2B2410;" title="Customer chats">
+  <span class="pvc-n" id="pvchat-fab-n">0</span>
+  <span style="font-size:22px;line-height:1;">💬</span>
+</button>
+<div id="pvchat-container">
+  <div class="sup-chat-header">
+    <button class="sup-back-btn" id="pvchat-back" aria-label="Back">←</button>
+    <div>
+      <div class="sup-name" id="pvchat-title">Customer Chats</div>
+      <div class="sup-sub" id="pvchat-sub">Pravasi Hampers</div>
+    </div>
+  </div>
+  <div id="pvchat-list" class="chat-messages"></div>
+  <div id="pvchat-thread">
+    <div id="pvchat-msgs" class="chat-messages"></div>
+    <div class="chat-input-bar" id="pvchat-bar">
+      <textarea id="pvchat-text" rows="1" placeholder="Reply to customer..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();pvcpSend();}"></textarea>
+      <button class="chat-send-btn" id="pvchat-mic-btn" type="button" aria-label="Record voice message" style="background:#fff;color:#000;">🎤</button>
+      <button class="chat-send-btn" onclick="pvcpSend()" aria-label="Send">&#10148;</button>
+    </div>
+    <div class="chat-input-bar" id="pvchat-rec" style="display:none;">
+      <span style="flex:1;font:700 .9rem 'Inter',sans-serif;color:var(--cloud);">🔴 Recording <span id="pvchat-rec-t">0:00</span></span>
+      <button class="chat-send-btn" id="pvchat-rec-cancel" type="button" aria-label="Cancel" style="background:#475569;">✕</button>
+      <button class="chat-send-btn" id="pvchat-rec-send" type="button" aria-label="Send voice message">&#10148;</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== OPERATOR PANEL ===================== -->
 <div id="operator-container">
   <!-- OPERATOR HOME -->
@@ -1772,6 +1818,10 @@
         <button class="op-logout-btn" onclick="opLogout()">Logout</button>
       </div>
       <p class="op-note" id="op-data-usage" style="margin:0 0 10px; display:none;"></p>
+      <div style="margin:0 0 12px;">
+        <label class="op-note" for="op-load-zone" style="display:block;margin:0 0 4px;">Load shops of zone (saves data)</label>
+        <select id="op-load-zone" onchange="opSetLoadZone(this.value)" style="width:100%;padding:10px;font-family:inherit;font-size:.95rem;"></select>
+      </div>
       <div style="margin:0 0 14px;position:relative;">
         <input type="search" id="op-home-search" placeholder="Search: coupon, orders, taxi…" oninput="opHomeSearch(this.value)" autocomplete="off" style="width:100%;background:#f4faf5;color:#15803d;border:1px solid #cfe6d5;padding:12px 14px;font-family:inherit;font-size:.95rem;">
         <p class="op-note" id="op-home-search-empty" style="display:none;margin:10px 0 0;">No card matches your search.</p>
@@ -1850,6 +1900,16 @@
           <h3>Online Payment UPI</h3>
           <p>One UPI ID for every shop's online payment (shops' own UPI is switched off)</p>
         </div>
+        <div class="op-home-card" onclick="opOpenSection('login-otp')">
+          <div class="op-home-icon">🔐</div>
+          <h3>Login OTP</h3>
+          <p>Turn the OTP at customer login ON or OFF (OFF = mobile number alone logs in)</p>
+        </div>
+        <div class="op-home-card" onclick="opOpenSection('item-share')">
+          <div class="op-home-icon">📤</div>
+          <h3>Item Share Button</h3>
+          <p>Show or hide the Share button on the product page in the customer app</p>
+        </div>
         <div class="op-home-card" onclick="opOpenSection('pricing')">
           <div class="op-home-icon">💰</div>
           <h3>Extra Amount</h3>
@@ -1875,6 +1935,11 @@
           <h3>Groceries Reward</h3>
           <p>After N Groceries orders: coupon or free item (Groceries only)</p>
         </div>
+        <div class="op-home-card" onclick="opOpenSection('referral')">
+          <div class="op-home-icon">🎁</div>
+          <h3>Refer &amp; Earn</h3>
+          <p>Friend's first order delivered: the referrer gets ₹ off (wallet, Food orders)</p>
+        </div>
         <div class="op-home-card" onclick="opOpenSection('video-ads')">
           <div class="op-home-icon">📺</div>
           <h3>Video Ads</h3>
@@ -1889,7 +1954,7 @@
         <div class="op-home-card" onclick="opOpenSection('category-order')">
           <div class="op-home-icon">🏠</div>
           <h3>Home Category Order</h3>
-          <p>Reorder Food / Groceries / Other Shop / Taxi on the customer app home screen</p>
+          <p>Reorder Pravasi Hampers / Food / Groceries / Other Shop / Taxi on the customer app home screen</p>
         </div>
         <div class="op-home-card" onclick="opOpenSection('shop-categories')">
           <div class="op-home-icon">🏷️</div>
@@ -1935,7 +2000,7 @@
         <div class="op-home-card" onclick="opOpenSection('trending')">
           <div class="op-home-icon">🔥</div>
           <h3>Trending Offers</h3>
-          <p>Set an offer price on any Groceries / NESH Mart product — offer products show in the customer app's Trending tab</p>
+          <p>Set an offer price on any product (or Food portion) — shows in the customer app's Trending tab / Food Offers strip</p>
         </div>
         <div class="op-home-card" onclick="opOpenSection('free-offers')">
           <div class="op-home-icon">🎁</div>
@@ -1982,6 +2047,31 @@
           <h3>Home Popup Banner</h3>
           <p>Offer popup on the customer app home screen (like "FREE DELIVERY") — set the text, image and which card "Order Now" opens</p>
         </div>
+        <div class="op-home-card" onclick="opOpenSection('pravasi-banner')">
+          <div class="op-home-icon">🎁</div>
+          <h3>Pravasi Banner</h3>
+          <p>Put a banner on the Pravasi Hampers screen — picture, heading, button and what it opens</p>
+        </div>
+        <div class="op-home-card" onclick="opOpenSection('abroad-popup')">
+          <div class="op-home-icon">✈️</div>
+          <h3>Abroad Popup</h3>
+          <p>The offer popup customers abroad see on the Pravasi screen (they never see the India home popup)</p>
+        </div>
+        <div class="op-home-card" onclick="opOpenSection('pravasi-airports')">
+          <div class="op-home-icon">✈️</div>
+          <h3>Pravasi Airports</h3>
+          <p>Add airports and choose which shops deliver to each airport — customers abroad pick an airport instead of a location</p>
+        </div>
+        <div class="op-home-card" onclick="opOpenSection('pravasi-chats')">
+          <div class="op-home-icon">💬</div>
+          <h3>Pravasi Chats</h3>
+          <p>See which customers chat with each Pravasi shop — delete voice messages or a whole chat</p>
+        </div>
+        <div class="op-home-card" onclick="opOpenSection('pravasi-design')">
+          <div class="op-home-icon">🎨</div>
+          <h3>Pravasi Design</h3>
+          <p>Upload a CSS or JSON design file — it replaces the old Pravasi design in the customer app (with Undo)</p>
+        </div>
         <div class="op-home-card" onclick="opOpenSection('test-location')">
           <div class="op-home-icon">🧪</div>
           <h3>Test Location</h3>
@@ -2024,6 +2114,11 @@
           <h3>Visits</h3>
           <p>Daily customer app visits (one per device per day)</p>
         </div>
+        <div class="op-home-card" onclick="opOpenSection('pay-requests')">
+          <div class="op-home-icon">🧹</div>
+          <h3>Pay Requests</h3>
+          <p>See and delete old "pay for me" links and their saved card images (frees database space)</p>
+        </div>
         <div class="op-home-card" onclick="opOpenSection('notify')">
           <div class="op-home-icon">📢</div>
           <h3>Send Notification</h3>
@@ -2045,6 +2140,8 @@
       <label class="op-switch-row"><span class="op-switch-text">🔔 Sound on new order<small>This phone only · off by default</small></span><input type="checkbox" class="op-switch" id="op-alert-sound" onchange="opSetAlertSound(this.checked)"></label>
       <label class="op-switch-row"><span class="op-switch-text">📳 Vibration on new order<small>This phone only · off by default</small></span><input type="checkbox" class="op-switch" id="op-alert-vibrate" onchange="opSetAlertVibrate(this.checked)"></label>
       </div>
+      <div class="op-search-box" style="margin-bottom:6px;"><input type="date" id="op-orders-date" onchange="opOrdersDayChanged()"></div>
+      <p class="op-note" style="margin:0 0 10px;">Only the last 2 days up to the picked date are downloaded (data saver). Delivered / Cancelled show the picked date; In Progress shows all open orders in that window.</p>
       <div class="op-order-tabs">
         <button type="button" class="op-order-tab active" data-tab="inprogress" onclick="opSwitchOrdersTab('inprogress')">In Progress</button>
         <button type="button" class="op-order-tab" data-tab="delivered" onclick="opSwitchOrdersTab('delivered')">Delivered</button>
@@ -2364,9 +2461,9 @@
       <p class="op-note">Profit per order = your item amount + GST + shop commission (if you set one for that shop) + delivery charge the customer paid − the real delivery charge given to the delivery boy (even when delivery was free for the customer) − coupon. Only delivered orders are counted.</p>
       <p class="op-note" id="op-profit-start" style="font-weight:600;color:#14532d;">Loading…</p>
       <div class="op-search-box" style="margin-bottom:10px;">
-        <input type="date" id="op-profit-date" onchange="opRenderProfit()">
+        <input type="date" id="op-profit-date" onchange="opProfitDateChanged()">
       </div>
-      <label class="op-switch-row" style="margin-bottom:12px;"><span class="op-switch-text">Show all dates<small>Ignore the date above</small></span><input type="checkbox" class="op-switch" id="op-profit-all" onchange="opRenderProfit()" checked></label>
+      <p class="op-note" style="margin-bottom:12px;">Only the picked date's orders are downloaded (data saver). <b>All-time profit</b> comes from the saved daily profit archive.</p>
       <div class="op-report-summary" id="op-profit-summary"></div>
       <div id="op-profit-list"></div>
     </div>
@@ -2516,6 +2613,32 @@
     </div>
   </div>
 
+  <!-- LOGIN OTP ON/OFF (app_config/otpOff: true = no OTP) -->
+  <div class="op-section" id="op-section-login-otp">
+    <div class="op-section-header">
+      <button class="op-back-btn" onclick="opOpenSection('home')">←</button>
+      <h2>Login OTP</h2>
+    </div>
+    <div class="op-section-body">
+      <p class="op-note">OTP ON: customers get an SMS code when they log in. OTP OFF: the mobile number alone logs in (no SMS). Takes effect right away for the next login, no app update needed. It is ON by default. Customers abroad never get an OTP.</p>
+      <div class="op-mc-row" style="margin-bottom:10px;"><b>Customer login OTP:</b> <span id="op-login-otp-status">—</span></div>
+      <button type="button" class="op-btn" id="op-login-otp-toggle-btn" onclick="opToggleLoginOtp()" style="margin-bottom:14px;"></button>
+    </div>
+  </div>
+
+  <!-- ITEM SHARE BUTTON ON/OFF -->
+  <div class="op-section" id="op-section-item-share">
+    <div class="op-section-header">
+      <button class="op-back-btn" onclick="opOpenSection('home')">←</button>
+      <h2>Item Share Button</h2>
+    </div>
+    <div class="op-section-body">
+      <p class="op-note">Turn this OFF to hide the Share button on the product page in the customer app. Turn it ON to show it again. It is ON by default.</p>
+      <div class="op-mc-row" style="margin-bottom:10px;"><b>Share button in customer app:</b> <span id="op-item-share-status">—</span></div>
+      <button type="button" class="op-btn" id="op-item-share-toggle-btn" onclick="opToggleItemShare()" style="margin-bottom:14px;"></button>
+    </div>
+  </div>
+
   <!-- EXTRA AMOUNT (PAISA) -->
   <div class="op-section" id="op-section-pricing">
     <div class="op-section-header">
@@ -2610,6 +2733,26 @@
       <button type="button" class="op-btn op-btn-push" onclick="opLsSave()">💾 Save Groceries reward</button>
       <button type="button" class="op-btn" style="margin-left:8px;" onclick="opLsDelete()">🗑 Remove</button>
       <p class="op-note" id="op-ls-status" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- REFER &amp; EARN — stored at app_config/referral = { on, value, minOrder, minFirst, maxRewards, link }. Customer side: referral/{phone}, referralCodes/{CODE}, referralFriends/{referrer}/{friend} -->
+  <div class="op-section" id="op-section-referral">
+    <div class="op-section-header">
+      <button class="op-back-btn" onclick="opOpenSection('home')">←</button>
+      <h2>Refer &amp; Earn</h2>
+    </div>
+    <div class="op-section-body">
+      <p class="op-note">Every customer gets a code to share. When the friend's FIRST order is DELIVERED, only the customer who referred them gets the reward amount in their wallet (the friend who joined with the code gets no reward). The wallet is applied automatically on Food orders (one reward per order). Changing the amount later only affects rewards earned after the change; amounts already earned stay as they were.</p>
+      <label style="color:#15803d;font-size:.85rem;display:block;margin-bottom:10px;"><input type="checkbox" id="op-ref-on" checked> ✅ Refer &amp; Earn is ON</label>
+      <div style="margin:0 0 10px;"><input type="number" id="op-ref-value" min="1" placeholder="Reward amount ₹ (for each reward)" style="background:#f4faf5;color:#15803d;border:1px solid #cfe6d5;padding:8px;font-family:inherit;font-size:.85rem;width:250px;max-width:100%;"></div>
+      <div style="margin:0 0 10px;"><input type="number" id="op-ref-min" min="0" placeholder="Min order ₹ to use the reward (0 = none)" style="background:#f4faf5;color:#15803d;border:1px solid #cfe6d5;padding:8px;font-family:inherit;font-size:.85rem;width:300px;max-width:100%;"></div>
+      <div style="margin:0 0 10px;"><input type="number" id="op-ref-minfirst" min="0" placeholder="Min items ₹ for the friend's first order to count (0 = any)" style="background:#f4faf5;color:#15803d;border:1px solid #cfe6d5;padding:8px;font-family:inherit;font-size:.85rem;width:360px;max-width:100%;"></div>
+      <div style="margin:0 0 10px;"><input type="number" id="op-ref-max" min="1" max="500" placeholder="Max rewards one customer can earn (default 20)" style="background:#f4faf5;color:#15803d;border:1px solid #cfe6d5;padding:8px;font-family:inherit;font-size:.85rem;width:320px;max-width:100%;"></div>
+      <div style="margin:0 0 10px;"><input type="text" id="op-ref-link" maxlength="300" placeholder="Share link (empty = Play Store link of the app)" style="background:#f4faf5;color:#15803d;border:1px solid #cfe6d5;padding:8px;font-family:inherit;font-size:.85rem;width:100%;max-width:420px;"></div>
+      <button type="button" class="op-btn op-btn-push" onclick="opRefSave()">💾 Save Refer &amp; Earn</button>
+      <button type="button" class="op-btn" style="margin-left:8px;" onclick="opRefDelete()">🗑 Remove</button>
+      <p class="op-note" id="op-ref-status" style="margin-top:10px;"></p>
     </div>
   </div>
 
@@ -2776,6 +2919,10 @@
     </div>
     <div class="op-section-body">
       <div style="margin-bottom:12px;"><button type="button" class="op-btn op-btn-push" onclick="opOpenAddShop()">➕ Add shop</button></div>
+      <div style="margin-bottom:12px;">
+        <button type="button" class="op-btn op-btn-danger" onclick="opShopPhotoCleanup()">🗑 Delete old shop/item photos <span id="op-shopphoto-count"></span></button>
+        <p class="op-note" id="op-shopphoto-status" style="margin-top:4px;"></p>
+      </div>
       <div class="op-search-box"><input type="text" id="op-partners-search" placeholder="Search restaurants..." oninput="opRenderPartnersList()"></div>
       <div class="op-search-box"><select id="op-partners-area-filter" onchange="opRenderPartnersList()" style="width:100%; padding:9px 10px; background:#f4faf5; color:#15803d; border:1px solid #cfe6d5; font-size:.85rem; font-family:inherit;"><option value="">All areas</option></select></div>
       <div id="op-partners-list"></div>
@@ -2795,6 +2942,27 @@
   </div>
 
 
+  <div class="op-section" id="op-section-pay-requests">
+    <div class="op-section-header">
+      <button class="op-back-btn" onclick="opOpenSection('home')">←</button>
+      <h2>Pay Requests</h2>
+    </div>
+    <div class="op-section-body">
+      <p style="color:#475569; font-size:.78rem; margin:0 0 14px; line-height:1.5;">Each "pay for me" link saves a request, a preview and a card image in the database. Deleting removes all three. A deleted link stops working, so keep recent ones.</p>
+      <select id="op-pr-age" onchange="opPrRender()" style="width:100%;padding:10px;font-family:inherit;font-size:.95rem;margin-bottom:10px;">
+        <option value="0">All pay requests</option>
+        <option value="1" selected>Older than 1 day</option>
+        <option value="3">Older than 3 days</option>
+        <option value="7">Older than 7 days</option>
+        <option value="30">Older than 30 days</option>
+      </select>
+      <button type="button" class="op-btn" id="op-pr-del-btn" onclick="opPrDeleteShown()" style="margin-bottom:10px;">Delete these</button>
+      <button type="button" class="op-btn" onclick="opPrLoad()" style="margin-bottom:10px;">Reload</button>
+      <p class="op-note" id="op-pr-status" style="margin:0 0 10px;"></p>
+      <div id="op-pr-list"></div>
+    </div>
+  </div>
+
   <!-- HOME CATEGORY ORDER -->
   <div class="op-section" id="op-section-category-order">
     <div class="op-section-header">
@@ -2802,7 +2970,7 @@
       <h2>Home Category Order</h2>
     </div>
     <div class="op-section-body">
-      <p class="op-note">This controls the order Food / Groceries / Other Shop / Taxi appear in on the customer app's home screen. Use the arrows to reorder, then save.</p>
+      <p class="op-note">This controls the order Pravasi Hampers / Food / Groceries / Other Shop / Taxi appear in on the customer app's home screen. Use the arrows to reorder, then save.</p>
       <div id="op-category-order-list"></div>
       <button type="button" class="op-btn op-btn-push" onclick="opSaveCategoryOrder()" style="margin-top:12px;">💾 Save order</button>
       <p class="op-note" id="op-category-order-status" style="margin-top:10px;"></p>
@@ -3131,7 +3299,8 @@
       <h2>Trending Offers</h2>
     </div>
     <div class="op-section-body">
-      <p class="op-note">An item with an offer price shows in the customer app's 🔥 Trending tab (Groceries and NESH Mart shops only). The tab appears for customers only while at least one offer exists. Customers pay the offer price instead of the normal price. This is the same setting each shop has in its own item form (last save wins).</p>
+      <p class="op-note">Groceries / NESH Mart: an item with an offer price shows in the customer app's 🔥 Trending tab (the tab appears only while at least one offer exists). Food shops: an item (or each portion — Quarter / Half / Full — of an item sold in portions) with an offer price shows in the 🔥 Offers strip on the customer's Food screen; a discounted portion shows there as its own item. Customers pay the offer price instead of the normal price and the shop is paid the offer price. Remove the offer and it disappears right away.</p>
+      <p class="op-note"><b>The offer price you type is what the CUSTOMER pays.</b> Each item shows its customer price (with the shop price in brackets); the strike-through price customers see is that customer price.</p>
       <h2 style="margin:14px 0 6px;">Live offers</h2>
       <div id="op-trend-current"></div>
       <div id="op-trend-editor" style="display:none; margin:16px 0; padding:14px; border:1px solid #cfe6d5;">
@@ -3322,6 +3491,7 @@
         <option value="online_shop">🛍️ Other Shop card</option>
         <option value="taxi">🚖 Taxi card</option>
         <option value="bus">🚌 Bus card</option>
+        <option value="pravasi">🎁 Pravasi Hampers card</option>
         <option value="orders">📦 Your Orders</option>
         <option value="none">Just close the popup</option>
       </select>
@@ -3347,6 +3517,174 @@
         <button type="button" class="op-btn op-btn-danger" onclick="opSaveHomePopup(false)">⏹ Switch OFF</button>
       </div>
       <p class="op-note" id="op-hp-status" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- PRAVASI BANNER — stored at pravasi/banner = { on, image, title, line, btn, action, value, bg, color, version, updatedAt } -->
+  <div class="op-section" id="op-section-pravasi-banner">
+    <div class="op-section-header">
+      <button class="op-back-btn" onclick="opOpenSection('home')">←</button>
+      <h2>Pravasi Banner</h2>
+    </div>
+    <div class="op-section-body">
+      <p class="op-note">A banner shown at the top of the <b>Pravasi Hampers</b> screen in the customer app (just under the search box). Fill it in, check the preview, then <b>Save &amp; switch ON</b>. No app update needed.</p>
+      <style>#op-section-pravasi-banner .hp-f{width:100%;padding:10px;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;font:inherit;box-sizing:border-box;margin-bottom:10px}#op-section-pravasi-banner .hp-l{display:block;font-size:12px;opacity:.8;margin:6px 0 4px}</style>
+
+      <label class="hp-l">Preview</label>
+      <div id="op-pb-preview" style="margin-bottom:12px;"></div>
+
+      <label class="hp-l">Picture (optional)</label>
+      <input type="file" id="op-pb-file" accept="image/*" onchange="opPbPickImage(event)" style="margin-bottom:8px;">
+      <input type="text" id="op-pb-image" class="hp-f" placeholder="…or paste an image link (https://…)" oninput="opPbPreview()">
+      <button type="button" class="op-btn op-btn-danger" style="padding:6px 10px;" onclick="document.getElementById('op-pb-image').value='';document.getElementById('op-pb-file').value='';opPbPreview()">Remove picture</button>
+
+      <label class="hp-l" style="margin-top:10px;">Heading (use Enter for a 2nd line)</label>
+      <textarea id="op-pb-title" class="hp-f" rows="2" maxlength="60" placeholder="Send love home 🎁" oninput="opPbPreview()"></textarea>
+      <label class="hp-l">Small line under it (optional)</label>
+      <input type="text" id="op-pb-line" class="hp-f" maxlength="80" placeholder="Hampers delivered to your family" oninput="opPbPreview()">
+      <label class="hp-l">Button text (leave empty for no button)</label>
+      <input type="text" id="op-pb-btn" class="hp-f" maxlength="24" placeholder="SHOP NOW" oninput="opPbPreview()">
+
+      <label class="hp-l">When the banner is tapped…</label>
+      <select id="op-pb-action" class="hp-f" onchange="opPbActionChanged()">
+        <option value="none">Do nothing</option>
+        <option value="search">Search for a word (e.g. hamper)</option>
+        <option value="shop">Open one shop</option>
+        <option value="link">Open a web link</option>
+        <option value="call">Call a phone number</option>
+      </select>
+      <div id="op-pb-row-search" style="display:none;"><input type="text" id="op-pb-v-search" class="hp-f" maxlength="30" placeholder="Word to search, e.g. hamper"></div>
+      <div id="op-pb-row-shop" style="display:none;"><select id="op-pb-v-shop" class="hp-f"></select></div>
+      <div id="op-pb-row-link" style="display:none;"><input type="text" id="op-pb-v-link" class="hp-f" placeholder="https://…"></div>
+      <div id="op-pb-row-call" style="display:none;"><input type="text" id="op-pb-v-call" class="hp-f" maxlength="16" placeholder="+91XXXXXXXXXX"></div>
+
+      <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
+        <label class="hp-l" style="display:flex;align-items:center;gap:8px;">Background <input type="color" id="op-pb-bg" value="#F2B705" oninput="opPbPreview()"></label>
+        <label class="hp-l" style="display:flex;align-items:center;gap:8px;">Text <input type="color" id="op-pb-color" value="#2B2410" oninput="opPbPreview()"></label>
+      </div>
+      <p class="op-note">Tip: when you use a picture, pick a <b>white</b> text colour so the words are easy to read.</p>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+        <button type="button" class="op-btn op-btn-push" onclick="opSavePravasiBanner(true)">💾 Save &amp; switch ON</button>
+        <button type="button" class="op-btn op-btn-danger" onclick="opSavePravasiBanner(false)">⏹ Switch OFF</button>
+      </div>
+      <p class="op-note" id="op-pb-status" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- ABROAD POPUP — stored at pravasi/popup = { on, bg, title, line, chip, image, btn, target, freq, version, updatedAt } -->
+  <div class="op-section" id="op-section-abroad-popup">
+    <div class="op-section-header">
+      <button class="op-back-btn" onclick="opOpenSection('home')">←</button>
+      <h2>Abroad Popup</h2>
+    </div>
+    <div class="op-section-body">
+      <p class="op-note">An offer popup shown to <b>customers abroad</b> when the Pravasi screen opens. Customers in India keep seeing the normal <b>Home Popup Banner</b>. Fill it in, then <b>Save &amp; switch ON</b>. Every save counts as a new offer.</p>
+      <style>#op-section-abroad-popup .hp-f{width:100%;padding:10px;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;font:inherit;box-sizing:border-box;margin-bottom:10px}#op-section-abroad-popup .hp-l{display:block;font-size:12px;opacity:.8;margin:6px 0 4px}</style>
+      <label class="hp-l">Big heading (use Enter for a 2nd line)</label>
+      <textarea id="op-ap-title" class="hp-f" rows="2" maxlength="60" placeholder="Gifts for&#10;your family"></textarea>
+      <label class="hp-l">Small line under it</label>
+      <input type="text" id="op-ap-line" class="hp-f" maxlength="70" placeholder="Delivered to you at the airport">
+      <label class="hp-l">Highlight tag (optional)</label>
+      <input type="text" id="op-ap-chip" class="hp-f" maxlength="50" placeholder="Pick your airport">
+      <label class="hp-l">Picture (optional)</label>
+      <input type="file" id="op-ap-file" accept="image/*" onchange="opApPickImage(event)" style="margin-bottom:8px;">
+      <input type="text" id="op-ap-image" class="hp-f" placeholder="…or paste an image link (https://…)" oninput="opApPreview()">
+      <img id="op-ap-preview" alt="" style="display:none;max-width:100%;max-height:160px;border-radius:10px;margin-bottom:10px;">
+      <label class="hp-l">Button text</label>
+      <input type="text" id="op-ap-btn" class="hp-f" maxlength="24" placeholder="CHOOSE AIRPORT">
+      <label class="hp-l">When the button is tapped…</label>
+      <select id="op-ap-target" class="hp-f">
+        <option value="airport">✈️ Open the airport list</option>
+        <option value="close">Just close the popup</option>
+      </select>
+      <label class="hp-l">Colour</label>
+      <select id="op-ap-bg" class="hp-f">
+        <option value="pink">Pink</option><option value="green">Green</option><option value="orange">Orange</option><option value="purple">Purple</option><option value="yellow">Yellow</option>
+      </select>
+      <label class="hp-l">How often to show</label>
+      <select id="op-ap-freq" class="hp-f">
+        <option value="always">Every time the app opens</option>
+        <option value="daily">Once a day</option>
+        <option value="once">Only once per offer</option>
+      </select>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+        <button type="button" class="op-btn op-btn-push" onclick="opApSave(true)">💾 Save &amp; switch ON</button>
+        <button type="button" class="op-btn op-btn-danger" onclick="opApSave(false)">⏹ Switch OFF</button>
+      </div>
+      <p class="op-note" id="op-ap-status" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- PRAVASI AIRPORTS — stored at pravasi/airports/{id} = { name, code, lat, lng, active, shopIds:{shopId:true}, points:{pointId:{name,lat,lng}}, updatedAt } -->
+  <div class="op-section" id="op-section-pravasi-airports">
+    <div class="op-section-header">
+      <button class="op-back-btn" onclick="opOpenSection('home')">←</button>
+      <h2>Pravasi Airports</h2>
+    </div>
+    <div class="op-section-body">
+      <p class="op-note">Customers outside India do not set a location. They pick an <b>airport</b> at the top of the Pravasi Hampers screen, and then see <b>only the shops you tick for that airport</b>. Until they pick one, they see all Pravasi shops.</p>
+      <button type="button" class="op-btn op-btn-push" onclick="opPaEdit('')">➕ Add airport</button>
+      <div id="op-pa-editor" style="display:none; margin-top:12px; padding:12px; border:1px solid currentColor; border-radius:10px;"></div>
+      <div id="op-pa-list" style="margin-top:12px;"></div>
+      <p class="op-note" id="op-pa-status" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- PRAVASI CHATS — pvchatMeta/{shop}/{customer}, pvchat/{shop}/{customer}/messages, pvchatVoice/{shop}/{customer}/{msgId} -->
+  <div class="op-section" id="op-section-pravasi-chats">
+    <div class="op-section-header">
+      <button class="op-back-btn" onclick="opOpenSection('home')">←</button>
+      <h2>Pravasi Chats</h2>
+    </div>
+    <div class="op-section-body">
+      <p class="op-note">Customer ↔ shop chats of the Pravasi Hampers shops. Voice messages delete themselves after 7 days — here you can delete them (or a whole chat) sooner.</p>
+      <select id="op-pc-shop" class="hp-f" style="width:100%;padding:10px;margin-bottom:8px;" onchange="opPcLoad()"></select>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <button type="button" class="op-btn" onclick="opPcLoad()">🔄 Reload</button>
+        <button type="button" class="op-btn op-btn-danger" onclick="opPcDeleteShopVoice()">🗑 Delete ALL voice of this shop</button>
+        <button type="button" class="op-btn op-btn-danger" onclick="opPcSweepExpired()">🧹 Delete expired voice (all shops)</button>
+      </div>
+      <div id="op-pc-list" style="margin-top:12px;"></div>
+      <p class="op-note" id="op-pc-status" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- PRAVASI DESIGN — upload pravasi.css / pravasi-data.json; writes design fields of pravasi/* (backup at pravasi/designBackup) -->
+  <div class="op-section" id="op-section-pravasi-design">
+    <div class="op-section-header">
+      <button class="op-back-btn" onclick="opOpenSection('home')">←</button>
+      <h2>Pravasi Design</h2>
+    </div>
+    <div class="op-section-body">
+      <p class="op-note">Upload a design file for the <b>Pravasi Hampers</b> screens. The new design <b>replaces the old one</b> in the customer app right away — no app update needed.</p>
+      <p class="op-note"><b>.css file</b> (with the <code>@card</code> / <code>@list</code> / <code>@shop</code> sections): replaces only the CSS.<br><b>.html file</b> (pravasi-layout.html, parts marked <code>&lt;!-- @shop --&gt;</code>, <code>@card</code>, <code>@hero</code>, <code>@top</code>, <code>@bottom</code>, <code>@empty</code>): replaces only the layout — the shop card template and the blocks around the list.<br><b>.json file</b> (pravasi-data.json): replaces all CSS + layout (shop card template, banners areas, hide list). Texts (title, tagline, icon, greeting…) change only if they are in the file.<br>Shops list, order and the Operator banner are <b>never</b> touched by an upload.</p>
+
+      <div class="op-note" style="margin:0 0 14px;padding:12px;border:1px solid currentColor;border-radius:10px;">
+        <b>Screen settings</b> (Pravasi Hampers screen)<br>
+        <label style="display:block;margin:8px 0 0;"><input type="checkbox" id="op-pl-food"> Food look (shop cards like the Food screen)</label>
+        <label style="display:block;margin:6px 0 0;"><input type="checkbox" id="op-pl-items"> Show items (hampers) list</label>
+        <label style="display:block;margin:6px 0 0;"><input type="checkbox" id="op-pl-shops"> Show shops list</label>
+        <label style="display:block;margin:6px 0 0;"><input type="checkbox" id="op-pl-mart"> Hide NESH Mart banners &amp; sections</label>
+        <label style="display:block;margin:6px 0 10px;"><input type="checkbox" id="op-pl-abroad"> Customers outside India open Pravasi Hampers directly (home cards hidden for them)</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;">
+          <button type="button" class="op-btn" onclick="opPravasiPreset('food')">🍔 Like Food</button>
+          <button type="button" class="op-btn" onclick="opPravasiPreset('mart')">🏪 Like NESH Mart</button>
+          <button type="button" class="op-btn" onclick="opPravasiPreset('items')">🎁 Items only</button>
+        </div>
+        <button type="button" class="op-btn op-btn-push" onclick="opSavePravasiLayout()">💾 Save screen settings</button>
+        <span id="op-pl-status" style="margin-left:8px;"></span>
+      </div>
+
+      <input type="file" id="op-pd-file" accept=".css,.json,.html,text/css,application/json,text/html" onchange="opPdPickFile(event)" style="margin-bottom:10px;">
+      <div id="op-pd-summary" class="op-note" style="margin:0 0 10px;"></div>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" class="op-btn op-btn-push" id="op-pd-apply" onclick="opApplyPravasiDesign()" disabled>✅ Replace design in the app</button>
+        <button type="button" class="op-btn" id="op-pd-undo" onclick="opUndoPravasiDesign()" disabled>↩ Undo last upload</button>
+        <button type="button" class="op-btn" onclick="opPdDownloadCurrent()">⬇ Download current design</button>
+      </div>
+      <p class="op-note" id="op-pd-status" style="margin-top:10px;"></p>
     </div>
   </div>
 
@@ -3834,7 +4172,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, push, set, get, update, remove, goOffline, goOnline, query, orderByKey, startAt, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, onValue, push, set, get, update, remove, goOffline, goOnline, query, orderByKey, startAt, endAt, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCrM5wKwsnGtIc7HSTk_5R1d3dXEcYyd7o",
@@ -3848,7 +4186,64 @@
 
   const fbApp = initializeApp(firebaseConfig);
   const db = getDatabase(fbApp);
-  window.fb = { db, ref, onValue, push, set, get, update, remove, query, orderByKey, startAt, runTransaction };
+  window.fb = { db, ref, onValue, push, set, get, update, remove, query, orderByKey, startAt, endAt, runTransaction };
+  // Catalog version stamp: any write to a shop's PUBLIC fields (menu, stock, price, status, photo, hours...)
+  // bumps `catalogVer`, so customer apps that cache the catalog know to download it again.
+  (function () {
+    const f = window.fb, orig = { set, update, remove, push };
+    const PUB = /^restaurants\/[^/]+(\/(menu|itemCategories|popularItems|suggestItems|photo|status|restaurantName|address|location|businessType|openTime|closeTime|hoursEnabled|deliveryCharges|deliveryZone|discount\w*|goSeries|gpayNumber|minOrderAmount|opCategory|shopUnavailable\w*|deliveryTimeMins|opDeliveryTimeMins|martRanges|priceMarkup|ratingCount|ratingSum)(\/|$))?$|^restaurants\/[^/]+\/(menu|itemCategories|popularItems|suggestItems|photo|status|restaurantName|address|location|businessType|openTime|closeTime|hoursEnabled|deliveryCharges|deliveryZone|discount\w*|goSeries|gpayNumber|minOrderAmount|opCategory|shopUnavailable\w*|deliveryTimeMins|opDeliveryTimeMins|martRanges|priceMarkup|ratingCount|ratingSum)(\/|$)/;
+    const pathOf = r => { try { return String(r).replace(/^https?:\/\/[^/]+\/?/, '').replace(/\/$/, ''); } catch (e) { return ''; } };
+    let bumpT = null; const dirty = new Set();
+    // Stamps what changed: catalogVerShop/{shopId} = now (customer apps re-download ONLY that shop) and the old global
+    // catalogVer (kept for customer app versions that don't know catalogVerShop yet).
+    const bump = (ids) => {
+      (ids || []).forEach(i => dirty.add(i));
+      clearTimeout(bumpT);
+      bumpT = setTimeout(() => {
+        const list = Array.from(dirty); dirty.clear();
+        const now = Date.now();
+        if (list.length) { const u = {}; list.forEach(i => { u[i] = now; }); orig.update(ref(db, 'catalogVerShop'), u).catch(e => { try { console.warn('catalogVerShop write blocked:', e && e.message); } catch (e2) {} }); }
+        orig.set(ref(db, 'catalogVer'), now).catch(e => { try { console.warn('catalogVer write blocked:', e && e.message); } catch (e2) {} });
+      }, 400);
+    };
+    // Which shops' PUBLIC fields does this write touch?
+    const shopsTouched = (r, vals) => {
+      const base = pathOf(r), out = new Set();
+      const add = p => { const m = PUB.test(p) && /^restaurants\/([^/]+)/.exec(p); if (m) out.add(m[1]); };
+      if (vals && typeof vals === 'object' && !Array.isArray(vals) && Object.keys(vals).some(k => k.indexOf('/') >= 0 || base === '' || /^restaurants\/[^/]+$/.test(base))) {
+        Object.keys(vals).forEach(k => add((base ? base + '/' : '') + k));
+      } else add(base);
+      return Array.from(out);
+    };
+    // app_config stamps: every write under app_config/{node} also sets appConfigVer/{node} = now, so customer apps that cache
+    // that node (see appConfigVer in the customer app) download it again - live, and only that node.
+    let cfgT = null; const cfgDirty = new Set();
+    const cfgBump = (nodes) => {
+      (nodes || []).forEach(n => cfgDirty.add(n));
+      clearTimeout(cfgT);
+      cfgT = setTimeout(() => {
+        const list = Array.from(cfgDirty); cfgDirty.clear();
+        const now = Date.now(), u = {}; list.forEach(n => { u[n] = now; });
+        if (list.length) orig.update(ref(db, 'appConfigVer'), u).catch(e => { try { console.warn('appConfigVer write blocked (add it to the database rules):', e && e.message); } catch (e2) {} });
+      }, 150);
+    };
+    const cfgTouched = (r, vals) => {
+      const base = pathOf(r), out = new Set();
+      const add = p => { const m = /^app_config\/([^/]+)/.exec(p); if (m) out.add(m[1]); };
+      if ((base === 'app_config' || base === '') && vals && typeof vals === 'object') Object.keys(vals).forEach(k => add((base ? base + '/' : '') + k));
+      else add(base);
+      return Array.from(out);
+    };
+    const wrap = (name, hasVal) => {
+      f[name] = function (r, v) {
+        const p = orig[name].apply(null, arguments);
+        try { const ids = shopsTouched(r, hasVal ? v : null); if (ids.length) Promise.resolve(p).then(() => bump(ids), () => {}); } catch (e) {}
+        try { const ns = cfgTouched(r, hasVal ? v : null); if (ns.length) Promise.resolve(p).then(() => cfgBump(ns), () => {}); } catch (e) {}
+        return p;
+      };
+    };
+    wrap('set', true); wrap('update', true); wrap('remove', false); wrap('push', false);
+  })();
 
   // ---------- Reliable reconnect after the app is minimized ----------
   // Mobile browsers/PWAs freeze the RTDB websocket while the app is in the
@@ -3875,13 +4270,37 @@
     isConnected = snap.val() === true;
   });
 
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) goOnline(db);
-  });
-
+  // ---- Reconnect after the app was in the background ----
+  // goOnline() alone does nothing while the SDK still believes it is connected, but a socket that slept in the background
+  // is often dead (no new data until the page is refreshed). So after a longer absence we open a FRESH socket, and keep
+  // checking until `.info/connected` is true again. Cycles run only while the app is visible, so it can never stay offline.
+  let awayAt = 0, recheckT = null, wentOffline = false;
+  const nshMarkAway = () => { if (!awayAt) awayAt = Date.now(); };
+  const nshReconnect = () => {
+    const away = awayAt ? Date.now() - awayAt : 0; awayAt = 0;
+    const hard = away > 20000 && !wentOffline; wentOffline = false;   // wentOffline: goOffline() already ran on pause, so goOnline() below is already a fresh socket
+    try { goOnline(db); } catch (e) {}
+    if (hard) {
+      try { goOffline(db); } catch (e) {}
+      setTimeout(() => { try { goOnline(db); } catch (e) {} }, 250);
+    }
+    clearInterval(recheckT);
+    let tries = 0;
+    recheckT = setInterval(() => {
+      if (document.hidden || isConnected || ++tries > 15) { clearInterval(recheckT); return; }
+      try { goOffline(db); goOnline(db); } catch (e) {}
+    }, 4000);
+  };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) nshMarkAway(); else nshReconnect(); });
+  window.addEventListener('online', () => { try { goOnline(db); } catch (e) {} });
+  window.addEventListener('pageshow', e => { if (e.persisted) nshReconnect(); });
+  try {
+    const CapApp0 = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+    if (CapApp0 && CapApp0.addListener) CapApp0.addListener('appStateChange', st => { if (st && st.isActive) nshReconnect(); else nshMarkAway(); });
+  } catch (e) {}
   setInterval(() => {
     if (!document.hidden && !isConnected) goOnline(db);
-  }, 15000);
+  }, 5000);
 
   // ---- Cloudinary photo upload (free, no card, no backend needed) ----
   window.CLOUDINARY_CLOUD_NAME = "gsbs6xkx";
@@ -4387,7 +4806,7 @@ function init() {
       if (!cached) showScreen('login');
     }, 7000);
 
-    get(ref(db, 'restaurants/' + savedId)).then(snap => {
+    fetchShopRecord(savedId).then(snap => {
       clearTimeout(timeoutId);
       if (snap.exists()) {
         logInRestaurant(savedId, snap.val()); // fresh data (updates cache too)
@@ -4568,6 +4987,31 @@ function useGpsFor(inputId, btnId) {
 const OPERATOR_USERNAME = "AFSALKN";
 const OPERATOR_PASSWORD = "AFsa12@*";
 
+/* Shop login / app-open data saver: the shop app only needs the shop's PROFILE fields here (name, address,
+   status, hours, discount, zone...). menu / orders / categories / settlements have their own listeners, so
+   they are no longer downloaded a second time inside the profile read. Child keys come from Firebase's
+   REST shallow=true (keys only), then each small child is read. Any failure falls back to the old full read.
+   Returns a snapshot-like { exists(), val() }. */
+const SHOP_HEAVY_CHILDREN = ['menu', 'orders', 'itemCategories', 'popularItems', 'suggestItems', 'settlements', 'orderRollup', 'commissionHistory', 'activeSession'];
+async function fetchShopRecord(id) {
+  const { db, ref, get } = window.fb;
+  try {
+    const res = await fetch('https://texi-and-food-default-rtdb.firebaseio.com/restaurants/' + encodeURIComponent(id) + '.json?shallow=true');
+    if (!res.ok) throw new Error('shallow ' + res.status);
+    const keys = await res.json();
+    if (keys === null) return { exists: () => false, val: () => null };
+    if (typeof keys !== 'object') throw new Error('unexpected shallow answer');
+    const light = {};
+    await Promise.all(Object.keys(keys).filter(k => SHOP_HEAVY_CHILDREN.indexOf(k) < 0).map(async k => {
+      const sn = await get(ref(db, 'restaurants/' + id + '/' + k));
+      if (sn.exists()) light[k] = sn.val();
+    }));
+    if (!Object.keys(light).length) throw new Error('empty profile');
+    return { exists: () => true, val: () => light };
+  } catch (e) {
+    return await get(ref(db, 'restaurants/' + id));   // old behaviour
+  }
+}
 async function doLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
@@ -4589,8 +5033,17 @@ async function doLogin() {
   btn.disabled = true;
   try {
     const { db, ref, get } = window.fb;
-    const snap = await get(ref(db, 'restaurants/' + username));
-    if (!snap.exists()) {
+    // Existing accounts keep the exact username they registered with; new ones are lowercase.
+    const okChars = /^[^.#$\[\]\/]+$/;
+    let loginId = username, snap = null;
+    if (okChars.test(username)) {
+      snap = await fetchShopRecord(username);
+      if (!snap.exists() && username !== username.toLowerCase()) {
+        const snap2 = await fetchShopRecord(username.toLowerCase());
+        if (snap2.exists()) { snap = snap2; loginId = username.toLowerCase(); }
+      }
+    }
+    if (!snap || !snap.exists()) {
       errEl.textContent = "No restaurant account found for this username";
       errEl.style.display = "block";
       return;
@@ -4601,7 +5054,7 @@ async function doLogin() {
       errEl.style.display = "block";
       return;
     }
-    logInRestaurant(username, rec);
+    logInRestaurant(loginId, rec);
   } catch (e) {
     errEl.textContent = "Couldn't log in — check your connection and try again.";
     errEl.style.display = "block";
@@ -4858,6 +5311,7 @@ function logInRestaurant(id, data) {
       listenDailyEarnings();
     });
     listenPartnerSupportMessages();
+    try { pvcpInit(); } catch (e) {}
     registerForOrderPushNotifications();
     checkAndShowAppVideo('shopAppVideo', 'nesh_shop_video_seen');
     // Claim this device as the active session for the shop BEFORE watching
@@ -5465,6 +5919,40 @@ async function uploadPhotoToCloudinary(blob) {
   return data.secure_url;
 }
 
+// ---------- PHOTO CACHE HELPERS (see NESH photo cache guide) ----------
+// Is this exact Cloudinary URL still used by any shop/item? (checked AFTER the new URL is saved)
+async function nshPhotoStillUsed(url) {
+  try {
+    const fb = window.fb;
+    const snap = await fb.get(fb.ref(fb.db, 'restaurants'));
+    const txt = JSON.stringify(snap.val() || {});
+    return txt.indexOf(url) > -1;
+  } catch (e) { return true; } // if unsure, never delete
+}
+// Old Cloudinary photo -> deleted through the poster-delete worker (only when nobody else uses it).
+async function nshPhotoChanged(oldUrl, newUrl) {
+  try {
+    if (!oldUrl || oldUrl === newUrl) return;
+    if (typeof oldUrl !== 'string' || oldUrl.indexOf('res.cloudinary.com') < 0) return;
+    if (!window.POSTER_DELETE_ENDPOINT || !window.fb) return;
+    if (await nshPhotoStillUsed(oldUrl)) return; // share check
+    const fb = window.fb;
+    const nref = fb.push(fb.ref(fb.db, 'notif_images'));
+    await fb.set(nref, { img: oldUrl, ts: Date.now(), expiresAt: Date.now() - 1000, src: 'shop' });
+    const r = await fetch(window.POSTER_DELETE_ENDPOINT, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'notif', id: nref.key }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.ok) await fb.remove(nref); // failed -> stays, opCleanupNotifImages retries
+  } catch (e) {}
+}
+// Non-Cloudinary (e.g. Google) link: add ?v=<time> so phones/app load the new photo.
+function nshBustUrl(u) {
+  if (!/^https?:/i.test(u) || u.indexOf('res.cloudinary.com') > -1) return u;
+  u = u.replace(/([?&])v=\d+&?/, '$1').replace(/[?&]$/, '');
+  return u + (u.indexOf('?') > -1 ? '&' : '?') + 'v=' + Date.now();
+}
+
 // ---------- RESTAURANT PHOTO ----------
 function renderRestPhoto(photoUrl) {
   const preview = document.getElementById('rest-photo-preview');
@@ -5495,8 +5983,10 @@ function handleRestPhotoSelect(e) {
         const blob = await resizeImageToBlob(img, 800, 0.7);
         const url = await uploadPhotoToCloudinary(blob);
         const { db, ref, update } = window.fb;
+        const oldPhoto = state.restaurant.photo;
         await update(ref(db, 'restaurants/' + state.restId), { photo: url });
         state.restaurant.photo = url;
+        nshPhotoChanged(oldPhoto, url);
         renderRestPhoto(url);
         showToast("Restaurant photo updated");
       } catch (err) {
@@ -5593,13 +6083,18 @@ async function doRegister() {
   const location = document.getElementById('reg-location').value.trim();
   const gst = document.getElementById('reg-gst').value.trim();
   const shopCategory = document.getElementById('reg-shop-category').value.trim();
-  const username = document.getElementById('reg-username').value.trim();
+  const username = document.getElementById('reg-username').value.trim().toLowerCase();
   const password = document.getElementById('reg-password').value;
   const errEl = document.getElementById('reg-error');
   errEl.style.display = "none";
 
   if (!name || !address || !username || !password) {
     errEl.textContent = "Please fill restaurant name, address, username and password";
+    errEl.style.display = "block";
+    return;
+  }
+  if (!regEditMode && !/^[a-z0-9_-]{3,30}$/.test(username)) {
+    errEl.textContent = "Username: 3-30 letters, numbers, _ or - only (no spaces or symbols). It is saved in small letters.";
     errEl.style.display = "block";
     return;
   }
@@ -5638,7 +6133,12 @@ async function doRegister() {
     }
 
     const snap = await get(ref(db, 'restaurants/' + username));
-    if (snap.exists()) {
+    let taken = snap.exists();
+    if (!taken) {
+      // an older shop may be saved with capital letters (e.g. "Nesh") - treat it as the same name
+      try { const ix = await get(ref(db, 'shopIds')); if (ix.exists()) taken = Object.keys(ix.val() || {}).some(k => k.toLowerCase() === username); } catch (e) {}
+    }
+    if (taken) {
       errEl.textContent = "This username is already taken";
       errEl.style.display = "block";
       return;
@@ -5656,7 +6156,14 @@ async function doRegister() {
       record.opCategory = shopCategory;
     }
     if (businessType === 'groceries') record.goSeries = true;
-    await set(ref(db, 'restaurants/' + username), record);
+    // Create only if nobody else got this username in the meantime (transaction); fall back to a plain write if transactions are not allowed.
+    let created = false;
+    try {
+      const tr = await window.fb.runTransaction(ref(db, 'restaurants/' + username), cur => (cur === null ? record : undefined));
+      if (!tr.committed) { errEl.textContent = "This username is already taken"; errEl.style.display = "block"; return; }
+      created = true;
+    } catch (e) { created = false; }
+    if (!created) await set(ref(db, 'restaurants/' + username), record);
     try { const f = window.fb; f.get(f.ref(f.db, 'shopIds')).then(sn => { if (sn.exists()) return f.update(f.ref(f.db, 'shopIds'), { [username]: true }); }).catch(() => {}); } catch (e) {} // only once the index has been created by the Operator Panel
     logInRestaurant(username, record);
   } catch (e) {
@@ -6431,7 +6938,9 @@ function openItemForm(item) {
   // else ever calls this in "new item" mode for a groceries shop.
   if (!item && isGroceriesShop()) return;
   state.editingItemId = item ? item.id : null;
+  state.editingOfferSizes = (item && item.offerSizePrices && typeof item.offerSizePrices === 'object') ? item.offerSizePrices : null;   // operator's per-portion offers (Food)
   state.photoDataUrl = item ? (item.photo || "") : "";
+  state.oldItemPhoto = item ? (item.photo || "") : "";
   document.getElementById('item-form-eyebrow').textContent = item ? "EDIT ITEM" : "NEW ITEM";
   document.getElementById('item-form-title').textContent = item ? "Edit menu item" : "Add menu item";
   document.getElementById('item-name').value = item ? item.name : "";
@@ -6636,11 +7145,20 @@ async function saveItem() {
       : []);
     const data = { name, desc, price, unit: isGroceriesShop() ? (state.selectedUnit || "piece") : "piece", photo: state.photoDataUrl || "", unavailable: document.getElementById('item-unavailable').checked, sizes, sizePrices: portionsOn ? portionPrices : null };
     if (offerSecOn) data.offerPrice = offerPrice > 0 ? offerPrice : null;
+    if (offerSecOn && offerPrice > 0) data.offerCustomerPrice = null;   // the shop just set its own offer price -> it replaces an earlier operator (customer-price) offer
+    // Operator's per-portion offers: drop any that no longer fit (portion removed, or its price is now at/below the offer). Untouched otherwise, so an offer set meanwhile isn't overwritten.
+    if (state.editingItemId && state.editingOfferSizes) {
+      const keep = {};
+      if (portionsOn) portionNames.forEach(sz => { const o = Number(state.editingOfferSizes[sz]); if (o > 0 && o < portionPrices[sz]) keep[sz] = o; });
+      const before = Object.keys(state.editingOfferSizes).length;
+      if (Object.keys(keep).length !== before) data.offerSizePrices = Object.keys(keep).length ? keep : null;
+    }
     if (state.editingItemId) {
       await update(ref(db, 'restaurants/' + state.restId + '/menu/' + state.editingItemId), data);
     } else {
       await set(push(ref(db, 'restaurants/' + state.restId + '/menu')), data);
     }
+    if (state.editingItemId && state.oldItemPhoto) nshPhotoChanged(state.oldItemPhoto, state.photoDataUrl || '');
     showToast(state.editingItemId ? "Item updated" : "Item added to your menu");
     showScreen('home');
   } catch (e) {
@@ -7107,6 +7625,9 @@ function buildOrderShareText(o) {
   const lines = [];
   lines.push(`🧾 Order #${o.orderNumber || o._id}`);
   lines.push(`👤 ${o.customerName || 'Guest'}${o.customerPhone ? ' — ' + o.customerPhone : ''}`);
+  if (o.customerPhoneAbroad) lines.push(`🌍 Abroad number: ${o.customerPhoneAbroad}`);
+  if (o.airportName) lines.push(`✈️ Airport: ${o.airportName}${o.airportCode ? ' (' + o.airportCode + ')' : ''}`);
+  if (o.deliveryPointName) lines.push(`📌 Meeting point: ${o.deliveryPointName}`);
   const addr = [o.customerAddress, o.customerLocation].filter(Boolean).join(', ');
   if (addr) lines.push(`📍 ${addr}`);
   if (o.customerLandmark) lines.push(`🏷️ Landmark: ${o.customerLandmark}`);
@@ -7162,7 +7683,7 @@ function renderOrderDetail(o) {
 
   const phoneLink = document.getElementById('od-cust-phone');
   if (o.customerPhone) {
-    phoneLink.textContent = o.customerPhone;
+    phoneLink.textContent = o.customerPhone + (o.customerPhoneAbroad ? '  ·  🌍 ' + o.customerPhoneAbroad : '') + (o.airportName ? '  ·  ✈️ ' + o.airportName : '') + (o.deliveryPointName ? '  ·  📌 ' + o.deliveryPointName : '');
     phoneLink.href = "tel:" + o.customerPhone;
   } else {
     phoneLink.textContent = '—';
@@ -8547,6 +9068,280 @@ function sendPartnerSupportMessage() {
 }
 
 /* =========================================================
+   PRAVASI SHOP — customer chats
+   pvchatMeta/{shopId}/{customerNumber} = { customerName, customerNumber, lastText, lastTime, lastFrom, unreadShop, unreadCustomer }
+   pvchat/{shopId}/{customerNumber}/messages/{id} = { from:'customer'|'shop', text, time, type?:'order', orderKey, orderNumber, items, total }
+   ========================================================= */
+let pvcpConvs = [], pvcpActive = null, pvcpThreadUnsub = null, pvcpPrevUnread = null;
+async function pvcpInit() {
+  if (!state.restId || state.pvcpFor === state.restId) return;
+  const r = state.restaurant || {};
+  if (r.businessType !== 'online_shop') return;
+  state.pvcpFor = state.restId;
+  const { db, ref, get, onValue } = window.fb;
+  let on = String(r.opCategory || '').trim().toLowerCase() === 'pravasi hampers';
+  try { const e = (await get(ref(db, 'pravasi/shops/' + state.restId))).val(); if (e) on = e.active !== false && e.active !== 'false'; } catch (e) {}
+  if (!on) return;
+  document.getElementById('pvchat-fab').classList.add('show');
+  onValue(ref(db, 'pvchatMeta/' + state.restId), snap => {
+    const list = []; snap.forEach(c => { list.push(Object.assign({ _id: c.key }, c.val())); });
+    list.sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
+    pvcpConvs = list;
+    if (!state.pvcpSwept) { state.pvcpSwept = true; setTimeout(() => { try { pvcpSweep(list); } catch (e) {} }, 3000); }
+    const unread = list.reduce((n, c) => n + (Number(c.unreadShop) || 0), 0);
+    const n = document.getElementById('pvchat-fab-n');
+    n.textContent = unread > 99 ? '99+' : unread; n.classList.toggle('show', unread > 0);
+    if (pvcpPrevUnread !== null && unread > pvcpPrevUnread) { const c = list.find(x => (Number(x.unreadShop) || 0) > 0); showToast('💬 New message' + (c ? ' from ' + (c.customerName || 'customer') : '')); }
+    pvcpPrevUnread = unread;
+    if (document.getElementById('pvchat-container').classList.contains('show') && !pvcpActive) pvcpRenderList();
+  });
+}
+function pvcpRenderList() {
+  const box = document.getElementById('pvchat-list');
+  if (!pvcpConvs.length) { box.innerHTML = '<p style="color:#6E8CAE;text-align:center;font-family:\'Inter\',sans-serif;font-size:.85rem;margin-top:20px;">No customer messages yet.</p>'; return; }
+  box.innerHTML = pvcpConvs.map(c => {
+    const u = Number(c.unreadShop) || 0;
+    return '<div class="pvc-conv" data-cn="' + escapeHtml(c._id) + '"><div><div class="nm">' + escapeHtml(c.customerName || c._id) + '</div><div class="lt">' +
+      (c.lastFrom === 'shop' ? 'You: ' : '') + escapeHtml(c.lastText || '') + '</div></div>' + (u ? '<span class="bd">' + u + '</span>' : '') + '</div>';
+  }).join('');
+}
+function pvcpOpen() {
+  const c = document.getElementById('pvchat-container');
+  c.classList.add('show'); c.classList.remove('in-thread'); pvcpActive = null;
+  document.getElementById('pvchat-title').textContent = 'Customer Chats'; document.getElementById('pvchat-sub').textContent = 'Pravasi Hampers';
+  pvcpRenderList();
+}
+function pvcpClose() {
+  if (pvcpThreadUnsub) { pvcpThreadUnsub(); pvcpThreadUnsub = null; }
+  pvcpActive = null;
+  document.getElementById('pvchat-container').classList.remove('show', 'in-thread');
+}
+function pvcpBack() {
+  try { if (PVRP.rec && PVRP.rec.state !== 'inactive') pvrpStop(true); } catch (e) {}
+  if (pvcpActive) { if (pvcpThreadUnsub) { pvcpThreadUnsub(); pvcpThreadUnsub = null; } pvcpOpen(); } else pvcpClose();
+}
+function pvcpOpenThread(cn) {
+  const conv = pvcpConvs.find(c => c._id === cn) || { _id: cn };
+  pvcpActive = cn;
+  document.getElementById('pvchat-container').classList.add('in-thread');
+  document.getElementById('pvchat-title').textContent = conv.customerName || cn;
+  document.getElementById('pvchat-sub').textContent = '+' + String(cn).replace(/^\+/, '');
+  document.getElementById('pvchat-msgs').innerHTML = '';
+  if (pvcpThreadUnsub) pvcpThreadUnsub();
+  const { db, ref, onValue, update } = window.fb;
+  pvcpThreadUnsub = onValue(ref(db, 'pvchat/' + state.restId + '/' + cn + '/messages'), snap => {
+    const list = []; snap.forEach(c => { list.push(Object.assign({ _id: c.key }, c.val())); });
+    list.sort((a, b) => (a.time || 0) - (b.time || 0));
+    pvcpRenderThread(list);
+    update(ref(db, 'pvchatMeta/' + state.restId + '/' + cn), { unreadShop: 0 }).catch(() => {});
+  });
+}
+function pvcpRenderThread(list) {
+  const box = document.getElementById('pvchat-msgs');
+  if (!list.length) { box.innerHTML = '<p style="color:#6E8CAE;text-align:center;font-size:.85rem;margin-top:20px;">No messages yet.</p>'; return; }
+  box.innerHTML = list.map(m => {
+    const t = m.time ? new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    if (m.type === 'order') {
+      const its = (m.items || []).map(i => escapeHtml(i.qty + '× ' + i.name)).join(', ');
+      return '<div class="pvc-ordercard"><b>🧾 New order #' + escapeHtml(String(m.orderNumber || '')) + '</b>' + (its ? its + '<br>' : '') +
+        (m.total ? 'Total ₹' + escapeHtml(String(m.total)) : '') + '<button type="button" data-ord="' + escapeHtml(String(m.orderKey || '')) + '">Open order</button></div>';
+    }
+    if (m.type === 'voice') {
+      const mine2 = m.from === 'shop', gone = m.expired || (m.expiresAt && Date.now() > m.expiresAt), c = pvcpVoiceCache[m._id];
+      return '<div class="chat-bubble-row ' + (mine2 ? 'me' : 'them') + '"><div class="chat-bubble">' + (gone ? '<i style="opacity:.7">🎤 Voice message expired</i>'
+        : c ? '<audio controls src="' + escapeHtml(c) + '" style="width:210px;max-width:100%;height:36px"></audio>'
+        : '<button type="button" class="pvc-vplay" data-vid="' + escapeHtml(m._id) + '">▶ Play voice message</button>') +
+        '<span class="chat-time">' + (m.dur ? Math.floor(m.dur / 60) + ':' + String(m.dur % 60).padStart(2, '0') + ' · ' : '') + t + '</span></div></div>';
+    }
+    const mine = m.from === 'shop';
+    return '<div class="chat-bubble-row ' + (mine ? 'me' : 'them') + '"><div class="chat-bubble">' + escapeHtml(m.text || '') + '<span class="chat-time">' + t + '</span></div></div>';
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+  try { pvcpCleanup(list, pvcpActive); } catch (e) {}
+}
+function pvcpSend() {
+  const ta = document.getElementById('pvchat-text'), text = ta.value.trim();
+  if (!text || !pvcpActive || !state.restId) return;
+  const { db, ref, push, set, update, runTransaction } = window.fb;
+  const time = Date.now(), cn = pvcpActive;
+  set(push(ref(db, 'pvchat/' + state.restId + '/' + cn + '/messages')), { from: 'shop', text, time }).catch(() => showToast("Couldn't send — check connection"));
+  update(ref(db, 'pvchatMeta/' + state.restId + '/' + cn), { lastText: text, lastTime: time, lastFrom: 'shop' }).catch(() => {});
+  runTransaction(ref(db, 'pvchatMeta/' + state.restId + '/' + cn + '/unreadCustomer'), v => (Number(v) || 0) + 1).catch(() => {});
+  ta.value = '';
+}
+// ---- Voice messages (shop side, max 60 s): tap 🎤 to record, ➤ to send. Saved in the database, deleted after 7 days. ----
+const pvVoiceIdb = {   // device cache: a voice is downloaded only ONCE, after that it plays from the phone
+  open() { return this._p || (this._p = new Promise((res, rej) => { try { const r = indexedDB.open('nesh_pv_voice', 1); r.onupgradeneeded = () => r.result.createObjectStore('v'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } })); },
+  async get(k) { try { const db = await this.open(); return await new Promise(res => { const q = db.transaction('v').objectStore('v').get(k); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); } catch (e) { return null; } },
+  async put(k, v) { try { const db = await this.open(); db.transaction('v', 'readwrite').objectStore('v').put(v, k); } catch (e) {} },
+  async del(k) { try { const db = await this.open(); db.transaction('v', 'readwrite').objectStore('v').delete(k); } catch (e) {} }
+};
+const PVC_MAX_SEC = 60, PVC_VOICE_DAYS = 7;
+const PVRP = { rec: null, chunks: [], stream: null, t0: 0, timer: null, cancel: false, busy: false };
+const pvcpVoiceCache = {}, pvcpCleaned = {};
+function pvrpMime() { const c = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus']; for (const m of c) { try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; } catch (e) {} } return ''; }
+function pvrpUi(on) {
+  document.getElementById('pvchat-bar').style.display = on ? 'none' : '';
+  document.getElementById('pvchat-rec').style.display = on ? 'flex' : 'none';
+  clearInterval(PVRP.timer);
+  if (on) {
+    const t = document.getElementById('pvchat-rec-t'); t.textContent = '0:00 / 1:00';
+    PVRP.timer = setInterval(() => {
+      const s = Math.floor((Date.now() - PVRP.t0) / 1000);
+      t.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ' / 1:00';
+      if (s >= PVC_MAX_SEC) pvrpStop(false);
+    }, 300);
+  }
+}
+async function pvrpStart() {
+  if (!pvcpActive || PVRP.busy) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) { showToast('Voice recording is not supported on this device'); return; }
+  try { PVRP.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { showToast('Please allow microphone access'); return; }
+  const mime = pvrpMime(); PVRP.chunks = []; PVRP.cancel = false;
+  PVRP.rec = new MediaRecorder(PVRP.stream, Object.assign(mime ? { mimeType: mime } : {}, { audioBitsPerSecond: 24000 }));
+  PVRP.rec.ondataavailable = e => { if (e.data && e.data.size) PVRP.chunks.push(e.data); };
+  PVRP.rec.onstop = pvrpDone;
+  PVRP.rec.start(); PVRP.t0 = Date.now(); pvrpUi(true);
+}
+function pvrpStop(cancel) { PVRP.cancel = !!cancel; if (PVRP.rec && PVRP.rec.state !== 'inactive') PVRP.rec.stop(); }
+async function pvrpDone() {
+  const dur = Math.min(PVC_MAX_SEC, Math.round((Date.now() - PVRP.t0) / 1000)), type = (PVRP.rec && PVRP.rec.mimeType) || 'audio/webm', cn = pvcpActive;
+  try { PVRP.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+  pvrpUi(false);
+  if (PVRP.cancel || !PVRP.chunks.length || dur < 1 || !cn) return;
+  PVRP.busy = true;
+  try {
+    const data = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(new Blob(PVRP.chunks, { type })); });
+    if (data.length > 600000) throw new Error('too big');
+    const { db, ref, push, set, update, runTransaction } = window.fb, time = Date.now();
+    const mref = push(ref(db, 'pvchat/' + state.restId + '/' + cn + '/messages'));
+    await set(ref(db, 'pvchatVoice/' + state.restId + '/' + cn + '/' + mref.key), { data });
+    await set(mref, { from: 'shop', type: 'voice', text: '🎤 Voice message', dur, time, expiresAt: time + PVC_VOICE_DAYS * 864e5 });
+    pvcpVoiceCache[mref.key] = data; pvVoiceIdb.put(mref.key, data);   // sender never downloads their own voice
+    update(ref(db, 'pvchatMeta/' + state.restId + '/' + cn), { lastText: '🎤 Voice message', lastTime: time, lastFrom: 'shop' }).catch(() => {});
+    runTransaction(ref(db, 'pvchatMeta/' + state.restId + '/' + cn + '/unreadCustomer'), v => (Number(v) || 0) + 1).catch(() => {});
+  } catch (e) { showToast("Couldn't send voice — check connection"); }
+  PVRP.busy = false;
+}
+async function pvcpPlayVoice(btn) {
+  const vid = btn.dataset.vid; btn.disabled = true; btn.textContent = 'Loading…';
+  try {
+    let d = pvcpVoiceCache[vid] || await pvVoiceIdb.get(vid);   // memory -> phone cache -> (only then) download
+    if (!d) { const { db, ref, get } = window.fb; const v = (await get(ref(db, 'pvchatVoice/' + state.restId + '/' + pvcpActive + '/' + vid))).val(); d = v && v.data; if (!d) throw new Error('gone'); pvVoiceIdb.put(vid, d); }
+    pvcpVoiceCache[vid] = d;
+    const a = document.createElement('audio'); a.controls = true; a.src = d; a.style.cssText = 'width:210px;max-width:100%;height:36px';
+    btn.replaceWith(a); a.play().catch(() => {});
+  } catch (e) { btn.disabled = false; btn.textContent = '▶ Play voice message'; showToast("Couldn't load voice — it may have been deleted"); }
+}
+function pvcpCleanup(list, cn) {   // expired (7 days) or deleted by the operator: drop the phone copy; expired ones are also removed from the database
+  const { db, ref, update, remove } = window.fb;
+  list.forEach(m => {
+    if (m.type !== 'voice') return;
+    const past = m.expiresAt && Date.now() >= m.expiresAt;
+    if ((!m.expired && !past) || pvcpCleaned[m._id]) return;
+    pvcpCleaned[m._id] = 1;
+    delete pvcpVoiceCache[m._id]; pvVoiceIdb.del(m._id);
+    if (!m.expired) {
+      remove(ref(db, 'pvchatVoice/' + state.restId + '/' + cn + '/' + m._id)).catch(() => {});
+      update(ref(db, 'pvchat/' + state.restId + '/' + cn + '/messages/' + m._id), { expired: true }).catch(() => {});
+    }
+  });
+}
+async function pvcpSweep(convs) {   // once per session: clear expired voice in the shop's 50 latest chats (messages only hold small notes, no audio)
+  const { db, ref, get } = window.fb;
+  for (const c of convs.slice(0, 50)) {
+    try { const list = []; (await get(ref(db, 'pvchat/' + state.restId + '/' + c._id + '/messages'))).forEach(x => { list.push(Object.assign({ _id: x.key }, x.val())); }); pvcpCleanup(list, c._id); } catch (e) {}
+  }
+}
+document.getElementById('pvchat-mic-btn').addEventListener('click', pvrpStart);
+document.getElementById('pvchat-rec-cancel').addEventListener('click', () => pvrpStop(true));
+document.getElementById('pvchat-rec-send').addEventListener('click', () => pvrpStop(false));
+document.getElementById('pvchat-msgs').addEventListener('click', e => { const b = e.target.closest && e.target.closest('.pvc-vplay'); if (b) pvcpPlayVoice(b); });
+
+document.getElementById('pvchat-fab').addEventListener('click', pvcpOpen);
+document.getElementById('pvchat-back').addEventListener('click', pvcpBack);
+document.getElementById('pvchat-list').addEventListener('click', e => { const el = e.target.closest && e.target.closest('[data-cn]'); if (el) pvcpOpenThread(el.getAttribute('data-cn')); });
+document.getElementById('pvchat-msgs').addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-ord]'); if (!b) return;
+  const id = b.getAttribute('data-ord'); pvcpClose();
+  if ((state.homeOrdersCache || []).some(x => x._id === id)) openOrderDetail(id);
+  else { showToast('Opening your orders…'); showScreen('home'); }
+});
+
+/* ---- Pravasi Chats (operator): delete voice / whole chats ---- */
+function opPcStatus(t) { const e = document.getElementById('op-pc-status'); if (e) e.textContent = t || ''; }
+function opPcShops() { return (opAllPartners || []).filter(p => p.businessType === 'online_shop' && String(p.opCategory || '').trim().toLowerCase() === 'pravasi hampers').sort((a, b) => (a.restaurantName || a._id).localeCompare(b.restaurantName || b._id)); }
+function opPcInit() {
+  const sel = document.getElementById('op-pc-shop'), shops = opPcShops(), keep = sel.value;
+  sel.innerHTML = shops.length ? shops.map(p => '<option value="' + escapeHtml(p._id) + '">' + escapeHtml(p.restaurantName || p._id) + '</option>').join('') : '<option value="">No Pravasi Hampers shops found</option>';
+  if (keep && shops.some(p => p._id === keep)) sel.value = keep;
+  opPcLoad();
+}
+async function opPcLoad() {
+  const rid = document.getElementById('op-pc-shop').value, box = document.getElementById('op-pc-list');
+  if (!rid) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="op-empty">Loading…</div>';
+  try {
+    const { db, ref, get } = window.fb;
+    const list = []; (await get(ref(db, 'pvchatMeta/' + rid))).forEach(c => { list.push(Object.assign({ _id: c.key }, c.val())); });
+    list.sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
+    if (!list.length) { box.innerHTML = '<div class="op-empty">No chats for this shop yet.</div>'; return; }
+    box.innerHTML = list.map(c => '<div style="border:1px solid currentColor;border-radius:10px;padding:10px;margin-bottom:8px;">' +
+      '<b>' + escapeHtml(c.customerName || c._id) + '</b> <span style="opacity:.7">+' + escapeHtml(String(c._id).replace(/^\+/, '')) + '</span><br>' +
+      '<span style="opacity:.8;font-size:.85em;">' + escapeHtml(c.lastText || '') + (c.lastTime ? ' · ' + new Date(c.lastTime).toLocaleString() : '') + '</span>' +
+      '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">' +
+      '<button type="button" class="op-btn op-btn-danger" style="padding:6px 10px;margin:0;" onclick="opPcDeleteVoice(\'' + escapeHtml(rid) + '\',\'' + escapeHtml(c._id) + '\')">🗑 Voice messages</button>' +
+      '<button type="button" class="op-btn op-btn-danger" style="padding:6px 10px;margin:0;" onclick="opPcDeleteChat(\'' + escapeHtml(rid) + '\',\'' + escapeHtml(c._id) + '\')">🗑 Whole chat</button></div></div>').join('');
+  } catch (e) { box.innerHTML = '<div class="op-empty">Error: ' + escapeHtml(e.message) + (/permission/i.test(e.message) ? ' (Firebase rules must allow pvchatMeta.)' : '') + '</div>'; }
+}
+// marks every voice message of one chat as expired + removes its audio; returns how many
+async function opPcCollectVoice(rid, cn, onlyExpired, up) {
+  const { db, ref, get } = window.fb; let n = 0;
+  (await get(ref(db, 'pvchat/' + rid + '/' + cn + '/messages'))).forEach(c => {
+    const m = c.val(); if (!m || m.type !== 'voice') return;
+    if (onlyExpired && (m.expired || !m.expiresAt || Date.now() < m.expiresAt)) return;
+    up['pvchat/' + rid + '/' + cn + '/messages/' + c.key + '/expired'] = true;
+    up['pvchatVoice/' + rid + '/' + cn + '/' + c.key] = null; n++;
+  });
+  return n;
+}
+async function opPcApply(up) {
+  const { db, ref, update } = window.fb, keys = Object.keys(up);
+  for (let i = 0; i < keys.length; i += 400) { const part = {}; keys.slice(i, i + 400).forEach(k => { part[k] = up[k]; }); await update(ref(db), part); }
+}
+async function opPcDeleteVoice(rid, cn) {
+  if (!confirm('Delete all voice messages of this chat? Customers will see "Voice message expired". This cannot be undone.')) return;
+  try { const up = {}, n = await opPcCollectVoice(rid, cn, false, up); await opPcApply(up); await window.fb.remove(window.fb.ref(window.fb.db, 'pvchatVoice/' + rid + '/' + cn)); opPcStatus('Deleted ' + n + ' voice message(s).'); }
+  catch (e) { opPcStatus('Error: ' + e.message); }
+}
+async function opPcDeleteChat(rid, cn) {
+  if (!confirm('Delete this WHOLE chat (all messages and voice)? This cannot be undone.')) return;
+  try { const { db, ref, remove } = window.fb; await remove(ref(db, 'pvchat/' + rid + '/' + cn)); await remove(ref(db, 'pvchatVoice/' + rid + '/' + cn)); await remove(ref(db, 'pvchatMeta/' + rid + '/' + cn)); opPcStatus('Chat deleted.'); opPcLoad(); }
+  catch (e) { opPcStatus('Error: ' + e.message); }
+}
+async function opPcDeleteShopVoice() {
+  const rid = document.getElementById('op-pc-shop').value; if (!rid) return;
+  if (!confirm('Delete ALL voice messages of this shop (every customer)? This cannot be undone.')) return;
+  try {
+    const { db, ref, get, remove } = window.fb, up = {}; let n = 0;
+    const cns = []; (await get(ref(db, 'pvchatMeta/' + rid))).forEach(c => { cns.push(c.key); });
+    for (const cn of cns) n += await opPcCollectVoice(rid, cn, false, up);
+    await opPcApply(up); await remove(ref(db, 'pvchatVoice/' + rid)); opPcStatus('Deleted ' + n + ' voice message(s).');
+  } catch (e) { opPcStatus('Error: ' + e.message); }
+}
+async function opPcSweepExpired() {
+  if (!confirm('Delete every voice message older than 7 days, for all Pravasi shops?')) return;
+  opPcStatus('Working…');
+  try {
+    const { db, ref, get } = window.fb, up = {}; let n = 0;
+    const metas = (await get(ref(db, 'pvchatMeta'))).val() || {};
+    for (const rid of Object.keys(metas)) for (const cn of Object.keys(metas[rid] || {})) n += await opPcCollectVoice(rid, cn, true, up);
+    await opPcApply(up); opPcStatus('Deleted ' + n + ' expired voice message(s).');
+  } catch (e) { opPcStatus('Error: ' + e.message); }
+}
+
+/* =========================================================
    OPERATOR PANEL
    ========================================================= */
 let opCurrentPartnerId = null;
@@ -8672,10 +9467,10 @@ function opEnterPanel() {
   opListenPartners();
   opListenZones();
   opListenZoneGroups();
-  opListenDrivers();
-  opListenRides();
   opListenBuses();
   opListenBusFeatureToggle();
+  opListenItemShareToggle();
+  opListenLoginOtpToggle();
   opListenCategoryOrder();
   opListenShopOrder();
   opListenNeshItemOrder();
@@ -8696,17 +9491,121 @@ function opLogout() {
     opDeviceKey = null;
   }
   localStorage.removeItem('asfood_is_operator');
+  try { opZoneSel = ''; opSyncPartnerLoad(); opAllPartners = []; } catch (e) {}
   document.documentElement.classList.remove('op-boot');
   document.getElementById('operator-container').classList.remove('show');
   showScreen('login');
 }
+/* Orders / Reports / Order Profit need every shop's orders: loading all shops happens only while
+   these screens are open, then the previously picked zone is restored (data saver). */
+let opZoneBeforeAll = null;
+function opLoadAllForSection() {
+  if (opZoneSel === '__all__') return;
+  opZoneBeforeAll = opZoneSel;
+  opZoneSel = '__all__';
+  try { opFillLoadZoneSelect(); opSyncPartnerLoad(); } catch (e) {}
+}
+function opRestoreZoneLoad() {
+  if (opZoneBeforeAll === null) return;
+  opZoneSel = opZoneBeforeAll; opZoneBeforeAll = null;
+  try { opFillLoadZoneSelect(); opSyncPartnerLoad(); } catch (e) {}
+}
+/* ===== Pay Requests cleanup ===== */
+var _opPr = { rows: [], shown: [] };
+function opPrAge(ms) {
+  if (!ms) return 'unknown age';
+  const d = (Date.now() - ms) / 86400000;
+  if (d < 1) return Math.max(1, Math.round(d * 24)) + ' h old';
+  return Math.floor(d) + ' d old';
+}
+async function opPrLoad() {
+  const st = document.getElementById('op-pr-status'), box = document.getElementById('op-pr-list');
+  if (!st || !box) return;
+  st.textContent = 'Loading…'; box.innerHTML = '';
+  try {
+    const { db, ref, get } = window.fb;
+    const res = await Promise.all([get(ref(db, 'payRequests')), get(ref(db, 'payPreview'))]);
+    const reqs = res[0].val() || {}, prevs = res[1].val() || {};
+    let cardKeys = [];
+    try { // keys only, so the big card images are not downloaded
+      const r = await fetch('https://texi-and-food-default-rtdb.firebaseio.com/payCards.json?shallow=true');
+      if (r.ok) { const j = await r.json(); cardKeys = j ? Object.keys(j) : []; }
+    } catch (e) {}
+    const cardSet = new Set(cardKeys);
+    const keys = new Set(Object.keys(reqs).concat(Object.keys(prevs), cardKeys));
+    _opPr.rows = Array.from(keys).map(function (k) {
+      const q = reqs[k] || null, p = prevs[k] || null;
+      return {
+        key: k, hasReq: !!q, hasPrev: !!p, hasCard: cardSet.has(k),
+        status: q ? (q.status || '') : '',
+        restName: (q && q.restName) || (p && p.restName) || '',
+        fromName: (q && q.fromName) || (p && p.fromName) || '',
+        at: (q && q.createdAt) || (p && p.at) || 0
+      };
+    }).sort(function (a, b) { return b.at - a.at; });
+    opPrRender();
+  } catch (e) { st.textContent = 'Could not load: ' + ((e && e.message) || e); }
+}
+function opPrRender() {
+  const st = document.getElementById('op-pr-status'), box = document.getElementById('op-pr-list');
+  const sel = document.getElementById('op-pr-age'), btn = document.getElementById('op-pr-del-btn');
+  if (!st || !box || !sel) return;
+  const days = parseInt(sel.value, 10) || 0, cutoff = Date.now() - days * 86400000;
+  const rows = _opPr.rows.filter(function (r) { return days === 0 || !r.at || r.at <= cutoff; });
+  _opPr.shown = rows.map(function (r) { return r.key; });
+  st.textContent = _opPr.rows.length + ' total · ' + rows.length + ' match this filter';
+  if (btn) { btn.textContent = 'Delete these ' + rows.length; btn.disabled = !rows.length; }
+  box.innerHTML = rows.slice(0, 100).map(function (r) {
+    const parts = [];
+    if (r.hasReq) parts.push('request'); if (r.hasPrev) parts.push('preview'); if (r.hasCard) parts.push('card image');
+    return '<div style="border:1px solid #cfe6d5;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
+      + '<div style="min-width:0;font-size:.82rem;line-height:1.5;">'
+      + '<b>' + escapeHtml(r.restName || '(no shop)') + '</b> · ' + escapeHtml(r.fromName || '—') + '<br>'
+      + '<span style="color:#64748b;">' + escapeHtml(r.status || 'no request') + ' · ' + opPrAge(r.at) + ' · ' + parts.join(' + ') + '</span></div>'
+      + '<button type="button" class="op-btn" data-key="' + escapeHtml(r.key) + '" onclick="opPrDeleteOne(this.dataset.key)" style="width:auto;padding:6px 12px;">Delete</button></div>';
+  }).join('') + (rows.length > 100 ? '<p class="op-note">Showing the first 100. Use "Delete these" to remove all ' + rows.length + '.</p>' : '');
+}
+async function opPrDeleteKeys(keys) {
+  const { db, ref, remove } = window.fb;
+  let done = 0, fail = 0;
+  for (const k of keys) {
+    try {
+      await Promise.all([remove(ref(db, 'payRequests/' + k)), remove(ref(db, 'payPreview/' + k)), remove(ref(db, 'payCards/' + k))]);
+      done++;
+    } catch (e) { fail++; }
+  }
+  return { done: done, fail: fail };
+}
+async function opPrDeleteOne(key) {
+  if (!key || !confirm('Delete this pay request and its card image? The link will stop working.')) return;
+  const r = await opPrDeleteKeys([key]);
+  _opPr.rows = _opPr.rows.filter(function (x) { return x.key !== key; });
+  opPrRender();
+  if (r.fail) document.getElementById('op-pr-status').textContent = 'Delete failed (check database rules).';
+}
+async function opPrDeleteShown() {
+  const keys = _opPr.shown.slice();
+  if (!keys.length) return;
+  if (!confirm('Delete ' + keys.length + ' pay request(s) with their previews and card images?\nThis cannot be undone and those links will stop working.')) return;
+  const st = document.getElementById('op-pr-status');
+  st.textContent = 'Deleting…';
+  const r = await opPrDeleteKeys(keys);
+  const gone = new Set(keys);
+  _opPr.rows = _opPr.rows.filter(function (x) { return !gone.has(x.key); });
+  opPrRender();
+  st.textContent = 'Deleted ' + r.done + (r.fail ? ' · failed ' + r.fail + ' (check database rules)' : '') + ' · ' + _opPr.rows.length + ' left';
+}
+
 function opOpenSection(name) {
+  if (['orders'].indexOf(name) >= 0) opLoadAllForSection(); else opRestoreZoneLoad();
   document.querySelectorAll('#operator-container .op-section').forEach(s => s.classList.remove('active'));
   document.getElementById('op-section-' + name).classList.add('active');
   if (name === 'push') opUpdateAppCodeSizeLabel();
   if (name === 'partners') { opPopulatePartnersAreaFilter(); opRenderPartnersList(); }
   if (name === 'deletions') opRenderDeletionsList();
+  if (name === 'pay-requests') opPrLoad();
   if (name === 'visits') opLoadVisits();
+  if (name === 'drivers' || name === 'taxi-orders') { opEnsureDrivers(); opEnsureRides(); }
   if (name === 'drivers') { opPopulateDriversZoneFilter(); opRenderDriversList(); }
   if (name === 'taxi-orders') { opPopulateRidesZoneFilter(); opRenderRidesList(); }
   if (name === 'app-videos') { opLoadAppVideos(); opLoadBusVideos(); }
@@ -8714,6 +9613,7 @@ function opOpenSection(name) {
   if (name === 'coupons') { opCpnBuildShops(); try { opCpnEditReset(false); } catch (e) {} opLoadZoneNames().then(function () { opCpnBuildZones(); opLoadCoupons(); }); }
   if (name === 'loyalty') { opLoyBuildShops(); opLoyLoad(); opLoyLoadClaims(); opLoyLoadNudge(); }
   if (name === 'loyalty-store') { opLsRenderItemSelect(); opLsLoad(); }
+  if (name === 'referral') opRefLoad();
   if (name === 'notify') { opLoadPosters(); opRenderNotifyZones(); }
   if (name === 'zones') opRenderZonesList();
   if (name === 'category-order') opRenderCategoryOrder();
@@ -8721,6 +9621,7 @@ function opOpenSection(name) {
   if (name === 'shop-order') opBuildShopOrderWorking();
   if (name === 'delete-all') opOpenDeleteAllSection();
   if (name === 'support') opRenderChatConvList();
+  if (name === 'pravasi-chats') opPcInit();
   if (name === 'pricing') opLoadExtraAmount();
   if (name === 'online-upi') opLoadOnlineUpi();
   if (name === 'nesh-suggest') { const si = document.getElementById('op-nesh-suggest-search'); if (si) si.value = ''; document.getElementById('op-nesh-suggest-status').textContent = ''; opBuildNeshSuggest(); }
@@ -8731,6 +9632,10 @@ function opOpenSection(name) {
   if (name === 'support-phone') opLoadSupportPhone();
   if (name === 'test-location') opLoadTestLocation();
   if (name === 'home-popup') opLoadHomePopup();
+  if (name === 'pravasi-banner') opLoadPravasiBanner();
+  if (name === 'pravasi-design') opLoadPravasiDesign();
+  if (name === 'pravasi-airports') opPaLoad();
+  if (name === 'abroad-popup') opApLoad();
   if (name === 'driver-config') opLoadDriverConfig();
   if (name === 'driver-posters') opLoadDriverPosters();
   if (name === 'driver-sos') opRenderSosList();
@@ -8739,11 +9644,13 @@ function opOpenSection(name) {
   if (name === 'shop-delivery') { opCloseShopDeliveryEditor(); opRenderShopDeliveryList(); try { fzInit(); } catch (e) {} }
   if (name === 'delivery-time') { opCloseEtaEditor(); opRenderEtaList(); }
   if (name === 'shop-deals') { opCloseShopDealEditor(); opRenderShopDealsList(); }
-  if (name === 'trending') { opTrendCloseShop(); opRenderTrending(); }
+  if (name === 'trending') { opTrendCloseShop(); opTrendLoadCfg(); opRenderTrending(); }
   if (name === 'free-offers') opFoLoad();
   if (name === 'shop-zones') opRenderShopZones();
-  if (name === 'report') opRenderReportShopList();
-  if (name === 'profit') { const d = document.getElementById('op-profit-date'); if (d && !d.value) d.value = new Date().toLocaleDateString('en-CA'); opRenderProfit(); }
+  if (name === 'orders') { const od = document.getElementById('op-orders-date'); if (od && !od.value) od.value = opOrdersDayValue(); }
+  if (name === 'report') { opRenderReportShopList(); try { opLoadLiteShops(); } catch (e) {} }
+  if (name === 'profit') { try { opProfitLoadedDays.delete(new Date().toLocaleDateString('en-CA')); opProfitLoadedDays.delete(new Date(Date.now() - 864e5).toLocaleDateString('en-CA')); opLoadProfitDaily(); } catch (e) {}
+    const d = document.getElementById('op-profit-date'); if (d && !d.value) d.value = new Date().toLocaleDateString('en-CA'); opRenderProfit(); }
   if (name === 'groceries-queue') opRenderGroceriesQueueList();
   if (name === 'groceries-catalog') opRenderGroceriesCatalog();
   if (name === 'nesh-item-order') opBuildNeshItemOrderWorking();
@@ -9415,6 +10322,514 @@ function opSaveHomePopup(on) {
     .catch(err => { status.textContent = 'Error: ' + err.message; });
 }
 
+/* ---- Pravasi banner: /pravasi/banner { on, image, title, line, btn, action, value, bg, color, version, updatedAt } ---- */
+var opPbUploading = false;
+function opPbColor(c, d) { return /^#[0-9a-f]{3,8}$/i.test(String(c || '')) ? c : d; }
+function opPbBannerHtml(b) {
+  const bg = opPbColor(b.bg, '#F2B705'), fg = opPbColor(b.color, '#2B2410');
+  const img = /^https:\/\//i.test(b.image || '') ? String(b.image).replace(/'/g, '%27').replace(/"/g, '%22').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\s/g, '%20') : '';
+  const hasText = !!(b.title || b.line || b.btn);
+  const bgCss = 'background-color:' + bg + (img ? ";background-image:url('" + img + "');background-size:cover;background-position:center;" : ';');
+  return '<div style="position:relative;margin:6px 0;border-radius:20px;overflow:hidden;min-height:132px;display:flex;align-items:center;padding:18px;box-sizing:border-box;' + bgCss + 'color:' + fg + ';">'
+    + (img && hasText ? '<div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,0));"></div>' : '')
+    + (hasText ? '<div style="position:relative;z-index:1;max-width:80%;">'
+      + (b.title ? '<p style="margin:0;font-weight:800;font-size:20px;line-height:1.15;white-space:pre-line;">' + escapeHtml(b.title) + '</p>' : '')
+      + (b.line ? '<p style="margin:4px 0 0;font-size:13px;opacity:.92;">' + escapeHtml(b.line) + '</p>' : '')
+      + (b.btn ? '<span style="display:inline-block;margin-top:10px;border-radius:999px;padding:9px 16px;font-weight:700;font-size:13px;background:' + fg + ';color:' + bg + ';">' + escapeHtml(b.btn) + '</span>' : '')
+      + '</div>' : '')
+    + '</div>';
+}
+function opPbRead() {
+  const action = document.getElementById('op-pb-action').value;
+  const value = action === 'search' ? document.getElementById('op-pb-v-search').value.trim()
+    : action === 'shop' ? document.getElementById('op-pb-v-shop').value
+    : action === 'link' ? document.getElementById('op-pb-v-link').value.trim()
+    : action === 'call' ? document.getElementById('op-pb-v-call').value.replace(/[^\d+]/g, '') : '';
+  return {
+    image: document.getElementById('op-pb-image').value.trim(),
+    title: document.getElementById('op-pb-title').value.trim(),
+    line: document.getElementById('op-pb-line').value.trim(),
+    btn: document.getElementById('op-pb-btn').value.trim(),
+    action, value,
+    bg: document.getElementById('op-pb-bg').value,
+    color: document.getElementById('op-pb-color').value
+  };
+}
+function opPbPreview() {
+  const box = document.getElementById('op-pb-preview'); if (!box) return;
+  const b = opPbRead();
+  box.innerHTML = (b.image || b.title || b.line || b.btn) ? opPbBannerHtml(b) : '<p class="op-note">Nothing to preview yet — add a heading or a picture.</p>';
+}
+function opPbActionChanged() {
+  const a = document.getElementById('op-pb-action').value;
+  ['search', 'shop', 'link', 'call'].forEach(k => { document.getElementById('op-pb-row-' + k).style.display = (a === k) ? '' : 'none'; });
+}
+function opPbBuildShops(selectedId) {
+  const sel = document.getElementById('op-pb-v-shop');
+  const shops = opAllPartners.filter(p => p.businessType === 'online_shop').sort((x, y) => {
+    const px = String(x.opCategory || '').toLowerCase() === 'pravasi hampers' ? 0 : 1, py = String(y.opCategory || '').toLowerCase() === 'pravasi hampers' ? 0 : 1;
+    return px - py || String(x.restaurantName || '').localeCompare(String(y.restaurantName || ''));
+  });
+  sel.innerHTML = '<option value="">— pick a shop —</option>' + shops.map(p => '<option value="' + escapeHtml(p._id) + '">' + escapeHtml(p.restaurantName || p._id) + (p.opCategory ? ' (' + escapeHtml(p.opCategory) + ')' : '') + '</option>').join('');
+  if (selectedId) sel.value = selectedId;
+}
+function opPbPickImage(e) {
+  const file = e.target.files && e.target.files[0];
+  const status = document.getElementById('op-pb-status');
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = async () => {
+      opPbUploading = true;
+      status.textContent = 'Uploading picture...';
+      try {
+        const blob = await resizeImageToBlob(img, 1000, 0.8);
+        const url = await uploadPhotoToCloudinary(blob);
+        document.getElementById('op-pb-image').value = url;
+        opPbPreview();
+        status.textContent = 'Picture uploaded. Now press Save.';
+      } catch (err) {
+        status.textContent = 'Could not upload the picture — check your connection and try again.';
+      } finally { opPbUploading = false; }
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function opLoadPravasiBanner() {
+  const status = document.getElementById('op-pb-status');
+  status.textContent = 'Loading current banner...';
+  const { db, ref, get } = window.fb;
+  get(ref(db, 'pravasi/banner')).then(snap => {
+    const c = snap.val() || {};
+    document.getElementById('op-pb-image').value = c.image || '';
+    document.getElementById('op-pb-title').value = c.title || '';
+    document.getElementById('op-pb-line').value = c.line || '';
+    document.getElementById('op-pb-btn').value = c.btn || '';
+    document.getElementById('op-pb-action').value = c.action || 'none';
+    document.getElementById('op-pb-v-search').value = c.action === 'search' ? (c.value || '') : '';
+    document.getElementById('op-pb-v-link').value = c.action === 'link' ? (c.value || '') : '';
+    document.getElementById('op-pb-v-call').value = c.action === 'call' ? (c.value || '') : '';
+    opPbBuildShops(c.action === 'shop' ? c.value : '');
+    document.getElementById('op-pb-bg').value = opPbColor(c.bg, '#F2B705');
+    document.getElementById('op-pb-color').value = opPbColor(c.color, '#2B2410');
+    opPbActionChanged();
+    opPbPreview();
+    status.textContent = c.updatedAt ? ('Banner is ' + (c.on ? 'ON' : 'OFF') + ' — last saved ' + c.updatedAt + '.') : 'Not set yet — customers see no banner on Pravasi Hampers.';
+  }).catch(err => { status.textContent = 'Error: ' + err.message; });
+}
+function opSavePravasiBanner(on) {
+  const status = document.getElementById('op-pb-status');
+  if (opPbUploading) { status.textContent = 'Wait — the picture is still uploading.'; return; }
+  const b = opPbRead();
+  if (on && !b.title && !b.image && !b.line) { status.textContent = 'Add a heading or a picture first.'; return; }
+  if (b.image && !/^https:\/\//i.test(b.image)) { status.textContent = 'The picture link must start with https://'; return; }
+  if (b.action === 'shop' && !b.value) { status.textContent = 'Pick which shop the banner should open.'; return; }
+  if (b.action === 'search' && !b.value) { status.textContent = 'Type the word to search for.'; return; }
+  if (b.action === 'link' && !/^https:\/\//i.test(b.value)) { status.textContent = 'The web link must start with https://'; return; }
+  if (b.action === 'call' && b.value.replace(/\D/g, '').length < 6) { status.textContent = 'Enter a valid phone number.'; return; }
+  const data = Object.assign(b, { on: !!on, version: Date.now(), updatedAt: new Date().toLocaleString() });
+  status.textContent = 'Saving...';
+  const { db, ref, set } = window.fb;
+  set(ref(db, 'pravasi/banner'), data)
+    .then(() => { status.textContent = on ? 'Saved — banner is ON. It shows on the Pravasi Hampers screen right away.' : 'Saved — banner is OFF.'; })
+    .catch(err => { status.textContent = 'Error: ' + err.message + (/permission/i.test(err.message) ? ' (Firebase rules must allow writing to "pravasi".)' : ''); });
+}
+
+/* ---- Pravasi design upload: replaces design fields of /pravasi (never shops / banner) ---- */
+var OP_PD_STYLE_KEYS = ['cardCss', 'listCss', 'shopCss', 'css', 'cardHtml', 'shopHtml', 'heroHtml', 'listTopHtml', 'listBottomHtml', 'emptyHtml', 'hide', 'showProducts'];
+var OP_PD_TEXT_KEYS = ['title', 'tagline', 'icon', 'cardImage', 'listGreeting', 'listEyebrow', 'listPlaceholder'];
+var OP_PD_CSS_KEYS = ['cardCss', 'listCss', 'shopCss', 'css'];
+var opPdPending = null;
+function opPdMinify(c) {
+  return String(c).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s*\n\s*/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
+function opPdCheckCss(name, css) {
+  if (css.length > 60000) throw new Error(name + ' is too big (max 60,000 characters).');
+  if (/<\s*\/?\s*style/i.test(css)) throw new Error(name + ' must be plain CSS — remove the <style> tags.');
+  if ((css.match(/\{/g) || []).length !== (css.match(/\}/g) || []).length) throw new Error(name + ' has unbalanced { } — check the file.');
+}
+function opPdParse(fileName, text) {
+  const set = {}, clear = [], ignored = [];
+  if (/\.json$/i.test(fileName)) {
+    let obj; try { obj = JSON.parse(text); } catch (e) { throw new Error('This is not a valid JSON file.'); }
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw new Error('The JSON file must be an object { … }.');
+    Object.keys(obj).forEach(k => {
+      if (OP_PD_STYLE_KEYS.indexOf(k) < 0 && OP_PD_TEXT_KEYS.indexOf(k) < 0) ignored.push(k);
+    });
+    OP_PD_STYLE_KEYS.concat(OP_PD_TEXT_KEYS).forEach(k => {
+      const v = obj[k];
+      const isStyle = OP_PD_STYLE_KEYS.indexOf(k) >= 0;
+      if (v === undefined || v === null || v === '') { if (isStyle) clear.push(k); return; }
+      if (k === 'hide') { if (!Array.isArray(v) || v.some(x => typeof x !== 'string')) throw new Error('"hide" must be a list of words, e.g. ["search"].'); if (v.length) set[k] = v; else clear.push(k); return; }
+      if (k === 'showProducts') { set[k] = (v === true || v === 'true'); return; }
+      if (typeof v !== 'string') throw new Error('"' + k + '" must be text.');
+      if (v.length > 60000) throw new Error('"' + k + '" is too big (max 60,000 characters).');
+      if (OP_PD_CSS_KEYS.indexOf(k) >= 0) opPdCheckCss(k, v);
+      set[k] = v;
+    });
+  } else if (/\.html?$/i.test(fileName)) {
+    const map = { card: 'cardHtml', shop: 'shopHtml', hero: 'heroHtml', top: 'listTopHtml', bottom: 'listBottomHtml', empty: 'emptyHtml' };
+    const parts = text.split(/<!--\s*@(card|shop|hero|top|bottom|empty)\s*-->/);
+    if (parts.length === 1) throw new Error('No sections found — start each part with a marker like <!-- @shop -->.');
+    const found = {};
+    for (let i = 1; i < parts.length; i += 2) {
+      const h = parts[i + 1].replace(/<!--[\s\S]*?-->/g, '').replace(/\s*\n\s*/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      if (h) found[map[parts[i]]] = h;
+    }
+    Object.keys(map).forEach(m => {
+      const k = map[m];
+      if (found[k]) {
+        if (found[k].length > 60000) throw new Error(k + ' is too big (max 60,000 characters).');
+        set[k] = found[k];
+      } else clear.push(k);
+    });
+    if (!Object.keys(set).length) throw new Error('The sections in this file are empty.');
+  } else {
+    const parts = text.split(/\/\*\s*@(card|list|shop)\b/);
+    const found = {};
+    if (parts.length === 1) found.css = opPdMinify(text);
+    else {
+      const head = opPdMinify(parts[0]); if (head) found.css = head;
+      for (let i = 1; i < parts.length; i += 2) {
+        const body = parts[i + 1], j = body.indexOf('*/');
+        found[parts[i] + 'Css'] = opPdMinify(j >= 0 ? body.slice(j + 2) : body);
+      }
+    }
+    OP_PD_CSS_KEYS.forEach(k => {
+      if (found[k]) { opPdCheckCss(k, found[k]); set[k] = found[k]; } else clear.push(k);
+    });
+    if (!Object.keys(set).length) throw new Error('No CSS found in this file.');
+  }
+  if (!Object.keys(set).length && !clear.length) throw new Error('Nothing to upload in this file.');
+  return { name: fileName, set, clear, ignored };
+}
+function opPdPickFile(e) {
+  const f = e.target.files && e.target.files[0];
+  const status = document.getElementById('op-pd-status'), box = document.getElementById('op-pd-summary'), btn = document.getElementById('op-pd-apply');
+  opPdPending = null; btn.disabled = true; box.innerHTML = ''; status.textContent = '';
+  if (!f) return;
+  if (f.size > 300000) { status.textContent = 'File is too big (max 300 KB).'; return; }
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      opPdPending = opPdParse(f.name, String(r.result));
+      const s = opPdPending, ks = Object.keys(s.set);
+      box.innerHTML = '<b>' + escapeHtml(s.name) + '</b><br>'
+        + '✅ Will replace: ' + (ks.length ? ks.map(k => escapeHtml(k) + (typeof s.set[k] === 'string' ? ' (' + s.set[k].length + ' chars)' : '')).join(', ') : '—') + '<br>'
+        + '🧹 Will clear (old value removed): ' + (s.clear.length ? s.clear.map(escapeHtml).join(', ') : '—') + '<br>'
+        + (s.ignored.length ? '⏭ Ignored (not design): ' + s.ignored.map(escapeHtml).join(', ') : '');
+      btn.disabled = false;
+      status.textContent = 'Check the list, then press Replace.';
+    } catch (err) { status.textContent = err.message; }
+  };
+  r.onerror = () => { status.textContent = 'Could not read the file.'; };
+  r.readAsText(f);
+}
+function opLoadPravasiDesign() {
+  const status = document.getElementById('op-pd-status');
+  opPdPending = null;
+  document.getElementById('op-pd-file').value = '';
+  document.getElementById('op-pd-summary').innerHTML = '';
+  document.getElementById('op-pd-apply').disabled = true;
+  status.textContent = 'Loading...';
+  const { db, ref, get } = window.fb;
+  get(ref(db, 'pravasi')).then(snap => {
+    const c = snap.val() || {};
+    document.getElementById('op-pd-undo').disabled = !c.designBackup;
+    { const l = c.layout || {}, on = (v, d) => v === undefined || v === null ? d : (v === true || v === 'true');
+      document.getElementById('op-pl-food').checked = l.look === 'food';
+      document.getElementById('op-pl-items').checked = on(l.showItems, true);
+      document.getElementById('op-pl-shops').checked = on(l.showShops, false);
+      document.getElementById('op-pl-mart').checked = on(l.hideMartBanners, true);
+      document.getElementById('op-pl-abroad').checked = on(l.abroadDirect, true); }
+    status.textContent = c.designMeta && c.designMeta.updatedAt
+      ? 'Current design: ' + c.designMeta.name + ' — uploaded ' + c.designMeta.updatedAt + '.'
+      : 'No design file uploaded from here yet.';
+  }).catch(err => { status.textContent = 'Error: ' + err.message; });
+}
+function opApplyPravasiDesign() {
+  const status = document.getElementById('op-pd-status');
+  const s = opPdPending; if (!s) { status.textContent = 'Choose a file first.'; return; }
+  const { db, ref, get, update } = window.fb;
+  status.textContent = 'Replacing...';
+  get(ref(db, 'pravasi')).then(snap => {
+    const cur = snap.val() || {};
+    const keys = Object.keys(s.set).concat(s.clear);
+    const old = {};
+    keys.forEach(k => { if (cur[k] !== undefined) old[k] = cur[k]; });
+    const upd = {};
+    Object.keys(s.set).forEach(k => { upd[k] = s.set[k]; });
+    s.clear.forEach(k => { upd[k] = null; });
+    upd.designBackup = { at: new Date().toLocaleString(), keys, data: old };
+    upd.designMeta = { name: s.name, updatedAt: new Date().toLocaleString() };
+    return update(ref(db, 'pravasi'), upd);
+  }).then(() => {
+    opPdPending = null;
+    document.getElementById('op-pd-file').value = '';
+    document.getElementById('op-pd-apply').disabled = true;
+    document.getElementById('op-pd-undo').disabled = false;
+    document.getElementById('op-pd-summary').innerHTML = '';
+    status.textContent = 'Done — the old design is replaced. Customers see the new Pravasi design now. (Undo is available.)';
+  }).catch(err => { status.textContent = 'Error: ' + err.message + (/permission/i.test(err.message) ? ' (Firebase rules must allow writing to "pravasi".)' : ''); });
+}
+function opPravasiPreset(kind) {
+  const set = (id, v) => { document.getElementById(id).checked = v; };
+  if (kind === 'food') { set('op-pl-food', true); set('op-pl-items', false); set('op-pl-shops', true); set('op-pl-mart', true); }
+  else if (kind === 'mart') { set('op-pl-food', false); set('op-pl-items', false); set('op-pl-shops', true); set('op-pl-mart', false); }
+  else { set('op-pl-food', false); set('op-pl-items', true); set('op-pl-shops', false); set('op-pl-mart', true); }
+  document.getElementById('op-pl-status').textContent = 'Now press Save screen settings.';
+}
+
+
+/* ---- Abroad popup: /pravasi/popup { on, bg, title, line, chip, image, btn, target, freq, version, updatedAt } ---- */
+var opApUploading = false;
+function opApPreview() {
+  const url = document.getElementById('op-ap-image').value.trim();
+  const img = document.getElementById('op-ap-preview');
+  if (url) { img.src = url; img.style.display = 'block'; } else { img.removeAttribute('src'); img.style.display = 'none'; }
+}
+function opApPickImage(e) {
+  const file = e.target.files && e.target.files[0];
+  const status = document.getElementById('op-ap-status');
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = async () => {
+      opApUploading = true;
+      status.textContent = 'Uploading picture...';
+      try {
+        const blob = await resizeImageToBlob(img, 800, 0.8);
+        const url = await uploadPhotoToCloudinary(blob);
+        document.getElementById('op-ap-image').value = url;
+        opApPreview();
+        status.textContent = 'Picture uploaded. Now press Save.';
+      } catch (err) {
+        status.textContent = 'Could not upload the picture — check your connection and try again.';
+      } finally { opApUploading = false; }
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function opApLoad() {
+  const status = document.getElementById('op-ap-status');
+  status.textContent = 'Loading current popup...';
+  const { db, ref, get } = window.fb;
+  get(ref(db, 'pravasi/popup')).then(snap => {
+    const c = snap.val() || {};
+    document.getElementById('op-ap-title').value = c.title || '';
+    document.getElementById('op-ap-line').value = c.line || '';
+    document.getElementById('op-ap-chip').value = c.chip || '';
+    document.getElementById('op-ap-image').value = c.image || '';
+    document.getElementById('op-ap-btn').value = c.btn || '';
+    document.getElementById('op-ap-target').value = c.target || 'airport';
+    document.getElementById('op-ap-bg').value = c.bg || 'pink';
+    document.getElementById('op-ap-freq').value = c.freq || 'always';
+    opApPreview();
+    status.textContent = c.updatedAt ? ('Popup is ' + (c.on ? 'ON' : 'OFF') + ' — last saved ' + c.updatedAt + '.') : 'Not set yet — customers abroad see no popup.';
+  }).catch(err => { status.textContent = 'Error: ' + err.message; });
+}
+function opApSave(on) {
+  const status = document.getElementById('op-ap-status');
+  if (opApUploading) { status.textContent = 'Wait — the picture is still uploading.'; return; }
+  const title = document.getElementById('op-ap-title').value.trim();
+  const image = document.getElementById('op-ap-image').value.trim();
+  if (on && !title && !image) { status.textContent = 'Add a heading or a picture first.'; return; }
+  const data = {
+    on: !!on, title,
+    line: document.getElementById('op-ap-line').value.trim(),
+    chip: document.getElementById('op-ap-chip').value.trim(),
+    image,
+    btn: document.getElementById('op-ap-btn').value.trim() || 'OK',
+    target: document.getElementById('op-ap-target').value,
+    bg: document.getElementById('op-ap-bg').value,
+    freq: document.getElementById('op-ap-freq').value,
+    version: Date.now(),
+    updatedAt: new Date().toLocaleString()
+  };
+  status.textContent = 'Saving...';
+  const { db, ref, set } = window.fb;
+  set(ref(db, 'pravasi/popup'), data)
+    .then(() => { status.textContent = on ? 'Saved — popup is ON for customers abroad (shown when the Pravasi screen opens).' : 'Saved — popup is OFF.'; })
+    .catch(err => { status.textContent = 'Error: ' + err.message + (/permission/i.test(err.message) ? ' (Firebase rules must allow writing to "pravasi".)' : ''); });
+}
+/* ---- Pravasi airports: /pravasi/airports/{id} { name, code, lat, lng, active, shopIds:{shopId:true}, updatedAt } ---- */
+let opPaData = {}, opPaEditId = null, opPaSel = {}, opPaSearch = '', opPaPts = [];
+/* Delivery points = the exact spots in the airport where the delivery boy meets the customer. Customer picks one in "Your travel details". */
+function opPaPtsInit(a) {
+  const pts = (a && a.points) || {};
+  opPaPts = Object.keys(pts).map(id => ({ id, name: pts[id].name || '', ll: (typeof pts[id].lat === 'number' && typeof pts[id].lng === 'number') ? pts[id].lat + ', ' + pts[id].lng : '' }))
+    .sort((x, y) => String(x.name).localeCompare(String(y.name)));
+}
+function opPaRenderPts() {
+  const box = document.getElementById('op-pa-pts'); if (!box) return;
+  box.innerHTML = opPaPts.length ? opPaPts.map((pt, i) =>
+    '<div style="display:flex; gap:6px; align-items:flex-start; margin-top:8px; padding:8px; border:1px dashed currentColor; border-radius:8px;"><div style="flex:1; min-width:0;">' +
+    '<input class="hp-f" style="width:100%;padding:10px;box-sizing:border-box;" maxlength="60" placeholder="Point name (e.g. Arrival Gate 2)" value="' + escapeHtml(pt.name) + '" oninput="opPaPts[' + i + '].name=this.value">' +
+    '<input class="hp-f" style="width:100%;padding:10px;margin-top:6px;box-sizing:border-box;" placeholder="latitude, longitude (e.g. 10.1520, 76.4019)" value="' + escapeHtml(pt.ll) + '" oninput="opPaPts[' + i + '].ll=this.value"></div>' +
+    '<button type="button" class="op-btn op-btn-danger" onclick="opPaPtDel(' + i + ')" aria-label="Remove point">✕</button></div>').join('')
+    : '<p class="op-note" style="margin:6px 0 0;">No delivery points yet. Customers will be met at the airport spot above.</p>';
+}
+function opPaPtAdd() {
+  if (opPaPts.length >= 20) { opPaSetStatus('Maximum 20 delivery points per airport.'); return; }
+  opPaPts.push({ id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: '', ll: '' });
+  opPaRenderPts();
+}
+function opPaPtDel(i) { opPaPts.splice(i, 1); opPaRenderPts(); }
+function opPaSetStatus(t) { const e = document.getElementById('op-pa-status'); if (e) e.textContent = t || ''; }
+function opPaLoad() {
+  opPaSetStatus('Loading airports...');
+  const { db, ref, get } = window.fb;
+  get(ref(db, 'pravasi/airports')).then(sn => {
+    opPaData = sn.val() || {};
+    opPaSetStatus(Object.keys(opPaData).length ? '' : 'No airports yet — tap “Add airport”. Until you add one, customers abroad see the normal location picker.');
+    opPaRenderList();
+  }).catch(err => opPaSetStatus('Error: ' + err.message));
+}
+function opPaRenderList() {
+  const box = document.getElementById('op-pa-list'); if (!box) return;
+  const ids = Object.keys(opPaData).sort((a, b) => String(opPaData[a].name || '').localeCompare(String(opPaData[b].name || '')));
+  box.innerHTML = ids.map(id => {
+    const a = opPaData[id] || {};
+    const n = Object.keys(a.shopIds || {}).filter(k => a.shopIds[k]).length;
+    const on = a.active !== false && a.active !== 'false';
+    return '<div class="op-partner-item" style="display:flex; justify-content:space-between; align-items:center; gap:8px;">' +
+      '<div><div class="op-partner-name">✈️ ' + escapeHtml(a.name || id) + (a.code ? ' (' + escapeHtml(a.code) + ')' : '') + '</div>' +
+      '<div class="op-partner-sub">' + n + ' shop' + (n === 1 ? '' : 's') + ' · ' + Object.keys(a.points || {}).length + ' delivery point' + (Object.keys(a.points || {}).length === 1 ? '' : 's') + ' · ' + (on ? 'Shown to customers' : 'Hidden') + '</div></div>' +
+      '<div style="display:flex; gap:6px;"><button type="button" class="op-btn" onclick="opPaEdit(\'' + id + '\')">Edit</button>' +
+      '<button type="button" class="op-btn op-btn-danger" onclick="opPaDelete(\'' + id + '\')">Delete</button></div></div>';
+  }).join('');
+}
+function opPaEdit(id) {
+  opPaEditId = id || '';
+  const a = (id && opPaData[id]) || {};
+  opPaSel = Object.assign({}, a.shopIds || {});
+  opPaPtsInit(a);
+  opPaSearch = '';
+  const ed = document.getElementById('op-pa-editor');
+  ed.style.display = 'block';
+  ed.innerHTML =
+    '<b>' + (id ? 'Edit airport' : 'New airport') + '</b>' +
+    '<input id="op-pa-name" class="hp-f" style="width:100%;padding:10px;margin:8px 0 0;box-sizing:border-box;" placeholder="Airport name (e.g. Cochin International Airport)" value="' + escapeHtml(a.name || '') + '">' +
+    '<input id="op-pa-code" class="hp-f" style="width:100%;padding:10px;margin:8px 0 0;box-sizing:border-box;text-transform:uppercase;" maxlength="4" placeholder="Code (e.g. COK)" value="' + escapeHtml(a.code || '') + '">' +
+    '<input id="op-pa-latlng" class="hp-f" style="width:100%;padding:10px;margin:8px 0 0;box-sizing:border-box;" placeholder="Delivery point (required): latitude, longitude (e.g. 10.1520, 76.4019)" value="' + (typeof a.lat === 'number' ? a.lat + ', ' + a.lng : '') + '">' +
+    '<p class="op-note" style="margin:4px 0 0;">Tip: long-press the airport pickup spot in Google Maps and copy the two numbers. Used for the delivery charge and the rider.</p>' +
+    '<b style="display:block;margin-top:14px;">Delivery points (where the delivery boy meets the customer)</b>' +
+    '<p class="op-note" style="margin:4px 0 0;">Add as many as you need (max 20). The customer picks one in “Your travel details”, and the order is delivered there. Leave empty to use only the airport spot above.</p>' +
+    '<div id="op-pa-pts"></div>' +
+    '<button type="button" class="op-btn" style="margin-top:8px;" onclick="opPaPtAdd()">➕ Add delivery point</button>' +
+    '<label style="display:block;margin:10px 0;"><input type="checkbox" id="op-pa-active" ' + (a.active === false || a.active === 'false' ? '' : 'checked') + '> Show this airport to customers</label>' +
+    '<b>Shops that deliver to this airport</b>' +
+    '<input id="op-pa-search" class="hp-f" style="width:100%;padding:10px;margin:8px 0;box-sizing:border-box;" placeholder="Search shops" oninput="opPaSearch=this.value;opPaRenderShops()">' +
+    '<div id="op-pa-shops" style="max-height:320px;overflow:auto;"></div>' +
+    '<div style="display:flex; gap:8px; margin-top:10px;"><button type="button" class="op-btn op-btn-push" onclick="opPaSave()">💾 Save airport</button>' +
+    '<button type="button" class="op-btn" onclick="opPaCancel()">Cancel</button></div>';
+  opPaRenderPts();
+  opPaRenderShops();
+  ed.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function opPaCancel() { const ed = document.getElementById('op-pa-editor'); if (ed) { ed.style.display = 'none'; ed.innerHTML = ''; } opPaEditId = null; }
+function opPaRenderShops() {
+  const box = document.getElementById('op-pa-shops'); if (!box) return;
+  const q = (opPaSearch || '').trim().toLowerCase();
+  const isPv = p => String(p.opCategory || '').toLowerCase() === 'pravasi hampers' ? 0 : 1;
+  const shops = opAllPartners.filter(p => p.businessType === 'online_shop')
+    .filter(p => !q || String(p.restaurantName || '').toLowerCase().includes(q) || p._id.toLowerCase().includes(q))
+    .sort((a, b) => ((opPaSel[b._id] ? 1 : 0) - (opPaSel[a._id] ? 1 : 0)) || isPv(a) - isPv(b) || String(a.restaurantName || a._id).localeCompare(String(b.restaurantName || b._id)));
+  if (!shops.length) { box.innerHTML = '<p class="op-note">No matching shops.</p>'; return; }
+  box.innerHTML = shops.slice(0, 120).map(p =>
+    '<label class="op-partner-item" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;"><div>' +
+    '<div class="op-partner-name">' + escapeHtml(p.restaurantName || p._id) + '</div>' +
+    '<div class="op-partner-sub">' + escapeHtml(p.opCategory || opTypeLabel(p.businessType)) + '</div></div>' +
+    '<input type="checkbox" ' + (opPaSel[p._id] ? 'checked' : '') + ' style="width:22px;height:22px;" onchange="opPaToggleShop(\'' + p._id + '\',this.checked)"></label>').join('');
+}
+function opPaToggleShop(id, on) { if (on) opPaSel[id] = true; else delete opPaSel[id]; }
+function opPaSave() {
+  const name = document.getElementById('op-pa-name').value.trim();
+  const code = document.getElementById('op-pa-code').value.trim().toUpperCase();
+  const ll = document.getElementById('op-pa-latlng').value.trim();
+  if (!name) { opPaSetStatus('Please enter the airport name.'); return; }
+  const data = { name, code, active: document.getElementById('op-pa-active').checked, shopIds: Object.assign({}, opPaSel), updatedAt: new Date().toLocaleString() };
+  if (!ll) { opPaSetStatus('Delivery point is required (latitude, longitude) — the order is delivered there.'); return; }
+  if (ll) {
+    const m = ll.match(/(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)/);
+    if (!m) { opPaSetStatus('Delivery point must look like: 10.1520, 76.4019'); return; }
+    data.lat = Number(m[1]); data.lng = Number(m[2]);
+  }
+  const points = {};
+  for (let i = 0; i < opPaPts.length; i++) {
+    const pt = opPaPts[i], pn = String(pt.name || '').trim(), pl = String(pt.ll || '').trim();
+    if (!pn && !pl) continue;   // ignore empty rows
+    if (!pn) { opPaSetStatus('Delivery point ' + (i + 1) + ': please enter a name.'); return; }
+    const pm = pl.match(/(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)/);
+    if (!pm) { opPaSetStatus('Delivery point “' + pn + '”: location must look like 10.1520, 76.4019'); return; }
+    points[pt.id] = { name: pn, lat: Number(pm[1]), lng: Number(pm[2]) };
+  }
+  if (Object.keys(points).length) data.points = points;
+  const { db, ref, set } = window.fb;
+  const id = opPaEditId || ('ap_' + (code || 'x').toLowerCase() + '_' + Date.now().toString(36));
+  opPaSetStatus('Saving...');
+  set(ref(db, 'pravasi/airports/' + id), data).then(() => {
+    opPaData[id] = data; opPaCancel(); opPaRenderList();
+    opPaSetStatus('Saved — customers abroad see it now.');
+  }).catch(err => opPaSetStatus('Error: ' + err.message + (/permission/i.test(err.message) ? ' (Firebase rules must allow writing to "pravasi".)' : '')));
+}
+function opPaDelete(id) {
+  const a = opPaData[id] || {};
+  if (!confirm('Delete airport "' + (a.name || id) + '"?')) return;
+  const { db, ref, remove } = window.fb;
+  remove(ref(db, 'pravasi/airports/' + id)).then(() => { delete opPaData[id]; opPaRenderList(); opPaSetStatus('Deleted.'); })
+    .catch(err => opPaSetStatus('Error: ' + err.message));
+}
+function opSavePravasiLayout() {
+  const st = document.getElementById('op-pl-status');
+  const { db, ref, set } = window.fb;
+  st.textContent = 'Saving...';
+  set(ref(db, 'pravasi/layout'), {
+    look: document.getElementById('op-pl-food').checked ? 'food' : 'mart',
+    showItems: document.getElementById('op-pl-items').checked,
+    showShops: document.getElementById('op-pl-shops').checked,
+    hideMartBanners: document.getElementById('op-pl-mart').checked,
+    abroadDirect: document.getElementById('op-pl-abroad').checked,
+    updatedAt: new Date().toLocaleString()
+  }).then(() => { st.textContent = 'Saved — customers see it now.'; })
+    .catch(err => { st.textContent = 'Error: ' + err.message + (/permission/i.test(err.message) ? ' (Firebase rules must allow writing to "pravasi".)' : ''); });
+}
+function opUndoPravasiDesign() {
+  const status = document.getElementById('op-pd-status');
+  const { db, ref, get, update } = window.fb;
+  status.textContent = 'Restoring...';
+  get(ref(db, 'pravasi')).then(snap => {
+    const b = (snap.val() || {}).designBackup;
+    if (!b) { status.textContent = 'Nothing to undo.'; return; }
+    const upd = {};
+    (b.keys || []).forEach(k => { upd[k] = (b.data && b.data[k] !== undefined) ? b.data[k] : null; });
+    upd.designBackup = null;
+    upd.designMeta = { name: 'restored previous design', updatedAt: new Date().toLocaleString() };
+    return update(ref(db, 'pravasi'), upd).then(() => {
+      document.getElementById('op-pd-undo').disabled = true;
+      status.textContent = 'Restored — the design before the last upload is back.';
+    });
+  }).catch(err => { status.textContent = 'Error: ' + err.message; });
+}
+function opPdDownloadCurrent() {
+  const status = document.getElementById('op-pd-status');
+  const { db, ref, get } = window.fb;
+  get(ref(db, 'pravasi')).then(snap => {
+    const c = snap.val() || {}, out = {};
+    OP_PD_TEXT_KEYS.concat(OP_PD_STYLE_KEYS).forEach(k => { if (c[k] !== undefined) out[k] = c[k]; });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
+    a.download = 'pravasi-design.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    status.textContent = 'Downloaded the current design.';
+  }).catch(err => { status.textContent = 'Error: ' + err.message; });
+}
+
 /* ---- Driver app settings: /driver_config { supportPhone, incentiveAmount, incentiveText, updatedAt } ---- */
 function opLoadDriverConfig() {
   const status = document.getElementById('op-dcfg-status');
@@ -9592,6 +11007,7 @@ function opListenShopZones() {
     const sec = document.getElementById('op-section-shop-zones');
     if (sec && sec.classList.contains('active')) opRenderShopZones();
     try { opRenderNotifyZones(); } catch (e) {}
+    try { opFillLoadZoneSelect(); if (opZoneSel && opZoneSel !== '__all__') opSyncPartnerLoad(); } catch (e) {}
   });
 }
 function opSzBoundsOk(z) {
@@ -10453,17 +11869,112 @@ function opClearShopDeal() {
   }).catch(err => { status.textContent = 'Error: ' + err.message; });
 }
 
-/* ---- Trending offers (item offerPrice for Groceries + NESH Mart shops) ---- */
+/* ---- Trending offers ----
+   The operator types the offer as the price the CUSTOMER pays (the panel shows each item's customer price next to the shop price).
+   Stored on the item node the customer app already downloads (no extra reads):
+     menu/{item}/offerCustomerPrice                      one-price item (Groceries / NESH Mart / Food)
+     menu/{item}/offerCustomerSizePrices/{portion}       Food item sold in portions (Quarter / Half / Full)
+   The customer app applies it on top of its own final customer price. Older shop-price offers (offerPrice / offerSizePrices)
+   still work and are shown here converted to customer terms; saving or removing here replaces them (last save wins). */
 let opTrendShopId = null;
-function opTrendShops() { return opAllPartners.filter(p => p.businessType === 'groceries' || p.businessType === 'online_shop'); }
+let opTrendCfg = { goMarkup: 0, zones: {}, loaded: false, loading: false };
+// Same inputs the customer app uses to build a customer price: Go Series item markup + zone price ranges (Mart shops).
+function opTrendLoadCfg() {
+  if (opTrendCfg.loaded || opTrendCfg.loading) return;
+  opTrendCfg.loading = true;
+  const { db, ref, get } = window.fb;
+  Promise.all([get(ref(db, 'app_config/goSeriesDelivery')), get(ref(db, 'app_config/zoneDelivery'))]).then(([g, z]) => {
+    const gv = g.val();
+    opTrendCfg.goMarkup = (gv && Number(gv.itemMarkup)) || 0;
+    const zv = z.val() || {}, out = {};
+    Object.keys(zv).forEach(id => { const c = zv[id] || {}; out[id] = { shopIds: c.shopIds || null, freeTiers: Array.isArray(c.freeTiers) ? c.freeTiers : Object.values(c.freeTiers || {}) }; });
+    opTrendCfg.zones = out; opTrendCfg.loaded = true; opTrendCfg.loading = false;
+    try { opRenderTrending(); } catch (e) {}
+  }).catch(() => { opTrendCfg.loading = false; });
+}
+// The price a customer pays for `raw` (shop price) of this item — mirrors index.html (neshWithOffer / priceBump / markupFor). null until the config is loaded.
+function opTrendCust(p, it, raw, isPortion, sz) {
+  if (!opTrendCfg.loaded || !p || !it) return null;
+  raw = Number(raw) || 0;
+  if (raw <= 0) return null;
+  const grocery = p.businessType === 'groceries';
+  if (isPortion) {
+    const opSz = (it.customerSizePrices && typeof it.customerSizePrices === 'object') ? Number(it.customerSizePrices[sz]) : 0;
+    if (opSz > 0) return opSz;
+  } else if (Number(it.customerPrice) > 0 && !grocery) return Number(it.customerPrice);
+  const isMart = grocery || !!p.goSeries;
+  let tiers = [];
+  if (!isMart) {
+    const f = p.deliveryCharges && p.deliveryCharges.freeTiers;
+    tiers = f ? (Array.isArray(f) ? f : Object.values(f)) : [];
+  } else {
+    const own = p.martRanges ? (Array.isArray(p.martRanges) ? p.martRanges : Object.values(p.martRanges)) : [];
+    if (own.length) tiers = own;
+    else {
+      const zc = opTrendCfg.zones;
+      const zid = Object.keys(zc).find(id => zc[id] && zc[id].shopIds && zc[id].shopIds[p._id] && zc[id].freeTiers.length);
+      if (zid) tiers = zc[zid].freeTiers;
+    }
+  }
+  const hasCp = !isPortion && Number(it.customerPrice) > 0;
+  const piece = !it.unit || it.unit === 'piece';
+  let bump = 0, mk = 0;
+  if (!hasCp && piece) {
+    const t = tiers.find(t => t && raw >= (Number(t.min) || 0) && (t.max == null || raw < Number(t.max)));
+    const amt = Number(t && t.add);
+    if (t && amt > 0) bump = Math.round(amt);
+    const mt = p.priceMarkup ? (Array.isArray(p.priceMarkup) ? p.priceMarkup : Object.values(p.priceMarkup)).filter(Boolean) : [];
+    const mtier = mt.find(t => raw >= (Number(t.min) || 0) && (t.max == null || t.max === '' || raw <= Number(t.max)));
+    const val = Number(mtier && mtier.add) || 0;
+    if (mtier && val > 0) mk = mtier.type === 'pct' ? Math.round(raw * val / 100) : Math.round(val);
+  }
+  const go = (isPortion ? !!p.goSeries : (!!p.goSeries || grocery)) ? (Number(opTrendCfg.goMarkup) || 0) : 0;
+  return raw + go + bump + mk;
+}
+function opTrendShops() { return opAllPartners.filter(p => p && p._id); }
+function opTrendIsFood(p) { return !!p && p.businessType !== 'groceries' && p.businessType !== 'online_shop'; }
+function opTrendWhere(p) { return opTrendIsFood(p) ? 'the Food Offers strip' : 'Trending'; }
 function opTrendMenuList(p) {
   const m = p && p.menu ? p.menu : {};
   return Object.keys(m).map(k => Object.assign({ _k: k }, m[k]));
 }
+// Portion names of a food item sold in portions (same rule as the customer app: 2+ portions, each with a price). [] otherwise.
+function opTrendPortions(p, it) {
+  if (!opTrendIsFood(p) || !it || !it.sizePrices || typeof it.sizePrices !== 'object') return [];
+  const nm = Array.isArray(it.sizes) ? it.sizes.filter(Boolean) : [];
+  const ok = nm.filter(sz => Number(it.sizePrices[sz]) > 0);
+  return ok.length > 1 ? ok : [];
+}
+// Current offer of a portion, in CUSTOMER terms (0 = none).
+function opTrendPortionOffer(p, it, sz) {
+  const raw = Number(it.sizePrices[sz]);
+  const cust = opTrendCust(p, it, raw, true, sz);
+  const oc = (it.offerCustomerSizePrices && typeof it.offerCustomerSizePrices === 'object') ? Number(it.offerCustomerSizePrices[sz]) : 0;
+  if (oc > 0 && (cust === null || oc < cust)) return oc;
+  const o = (it.offerSizePrices && typeof it.offerSizePrices === 'object') ? Number(it.offerSizePrices[sz]) : 0;
+  if (o > 0 && o < raw && cust !== null) return Math.max(1, cust - (raw - o));
+  return 0;
+}
+// Current offer of a one-price item, in CUSTOMER terms (0 = none).
+function opTrendItemOffer(p, it) {
+  const raw = Number(it.price) || 0;
+  const cust = opTrendCust(p, it, raw, false);
+  const oc = Number(it.offerCustomerPrice) || 0;
+  if (oc > 0 && (cust === null || oc < cust)) return oc;
+  const o = Number(it.offerPrice) || 0;
+  if (o > 0 && o < raw && cust !== null) return Math.max(1, cust - (raw - o));
+  return 0;
+}
 function opTrendLive() {
   const out = [];
   opTrendShops().forEach(p => opTrendMenuList(p).forEach(it => {
-    if (Number(it.offerPrice) > 0 && Number(it.offerPrice) < Number(it.price)) out.push({ p, it });
+    const pt = opTrendPortions(p, it);
+    if (pt.length) {
+      pt.forEach((sz, idx) => { const o = opTrendPortionOffer(p, it, sz); if (o) out.push({ p, it, z: idx, label: sz, cust: opTrendCust(p, it, it.sizePrices[sz], true, sz), offer: o }); });
+      return;
+    }
+    const o = opTrendItemOffer(p, it);
+    if (o) out.push({ p, it, z: '', label: '', cust: opTrendCust(p, it, it.price, false), offer: o });
   }));
   return out;
 }
@@ -10471,29 +11982,31 @@ function opRenderTrending() {
   const cur = document.getElementById('op-trend-current');
   if (!cur) return;
   const live = opTrendLive();
-  cur.innerHTML = live.length ? live.map(({ p, it }) => `
+  cur.innerHTML = live.length ? live.map(({ p, it, z, label, cust, offer }) => `
     <div class="op-partner-item" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
       <div>
-        <div class="op-partner-name">${escapeHtml(it.name || 'Item')}</div>
-        <div class="op-partner-sub">${escapeHtml(p.restaurantName || p._id)} · ₹${escapeHtml(String(it.price))} → ₹${escapeHtml(String(it.offerPrice))}</div>
+        <div class="op-partner-name">${escapeHtml(it.name || 'Item')}${label ? ' · ' + escapeHtml(label) : ''}</div>
+        <div class="op-partner-sub">${escapeHtml(p.restaurantName || p._id)} · customer ${cust !== null ? '₹' + escapeHtml(String(cust)) + ' → ' : 'pays '}₹${escapeHtml(String(offer))}</div>
       </div>
-      <button type="button" class="op-btn op-btn-danger" style="margin:0;" data-s="${escapeHtml(p._id)}" data-i="${escapeHtml(it._k)}" onclick="opTrendClear(this.dataset.s, this.dataset.i)">Remove</button>
-    </div>`).join('') : '<p class="op-note">No offer products yet — the Trending tab is hidden for customers.</p>';
+      <button type="button" class="op-btn op-btn-danger" style="margin:0;" data-s="${escapeHtml(p._id)}" data-i="${escapeHtml(it._k)}" data-z="${escapeHtml(String(z))}" onclick="opTrendClear(this.dataset.s, this.dataset.i, this.dataset.z)">Remove</button>
+    </div>`).join('') : '<p class="op-note">' + (opTrendCfg.loaded ? 'No offer products yet — the Trending tab and the Food Offers strip are hidden for customers.' : 'Loading…') + '</p>';
+  const liveBy = {};
+  live.forEach(x => { liveBy[x.p._id] = (liveBy[x.p._id] || 0) + 1; });
   const wrap = document.getElementById('op-trend-shops');
   const q = (document.getElementById('op-trend-search').value || '').trim().toLowerCase();
   const shops = opTrendShops()
     .filter(p => !q || (p.restaurantName || '').toLowerCase().includes(q) || p._id.toLowerCase().includes(q))
     .sort((a, b) => (a.restaurantName || a._id).localeCompare(b.restaurantName || b._id));
   wrap.innerHTML = shops.length ? shops.map(p => {
-    const n = opTrendMenuList(p).filter(it => Number(it.offerPrice) > 0).length;
+    const n = liveBy[p._id] || 0;
     return `
     <div class="op-partner-item" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
       <div>
         <div class="op-partner-name">${escapeHtml(p.restaurantName || p._id)}</div>
-        <div class="op-partner-sub">${escapeHtml(opTypeLabel(p.businessType))} · ${n ? n + ' offer item' + (n > 1 ? 's' : '') : 'no offers'}</div>
+        <div class="op-partner-sub">${escapeHtml(opTypeLabel(p.businessType))} · ${n ? n + ' offer' + (n > 1 ? 's' : '') : 'no offers'}</div>
       </div>
       <button type="button" class="op-btn op-btn-push" style="margin:0;" data-id="${escapeHtml(p._id)}" onclick="opTrendOpenShop(this.dataset.id)">✏️ Items</button>
-    </div>`; }).join('') : '<p class="op-note">' + (q ? 'No matching shops.' : 'No Groceries / NESH Mart shops yet.') + '</p>';
+    </div>`; }).join('') : '<p class="op-note">' + (q ? 'No matching shops.' : 'No shops yet.') + '</p>';
   if (opTrendShopId) opTrendRenderItems();
 }
 function opTrendOpenShop(id) {
@@ -10520,39 +12033,99 @@ function opTrendRenderItems() {
   const items = opTrendMenuList(p)
     .filter(it => !q || String(it.name || '').toLowerCase().includes(q))
     .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
-  wrap.innerHTML = items.length ? items.map(it => `
+  const money = n => String(Math.round(n * 100) / 100);
+  wrap.innerHTML = items.length ? items.map(it => {
+    const pt = opTrendPortions(p, it);
+    if (pt.length) {
+      // Food item sold in portions: one offer price per portion (a discounted portion shows as its own item for customers)
+      return `
+    <div class="op-partner-item" style="padding-bottom:6px;">
+      <div class="op-partner-name">${escapeHtml(it.name || 'Item')}</div>
+      ${pt.map((sz, idx) => {
+        const o = opTrendPortionOffer(p, it, sz);
+        const cust = opTrendCust(p, it, it.sizePrices[sz], true, sz);
+        return `
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:6px;">
+        <div class="op-partner-sub" style="flex:1 1 120px; min-width:0;">${escapeHtml(sz)} · customer ${cust !== null ? '₹' + escapeHtml(money(cust)) : '…'} <span style="opacity:.7;">(shop ₹${escapeHtml(String(it.sizePrices[sz]))})</span>${o ? ' · offer ₹' + escapeHtml(money(o)) : ''}</div>
+        <input type="number" inputmode="decimal" min="0" step="any" placeholder="Offer ₹" value="${o ? escapeHtml(String(o)) : ''}" style="width:90px;padding:8px;" id="op-trend-pin-${escapeHtml(it._k)}-${idx}">
+        <button type="button" class="op-btn op-btn-push" style="margin:0;" data-i="${escapeHtml(it._k)}" data-z="${idx}" onclick="opTrendSave(opTrendShopId, this.dataset.i, this.dataset.z)">Save</button>
+        ${o ? `<button type="button" class="op-btn op-btn-danger" style="margin:0;" data-i="${escapeHtml(it._k)}" data-z="${idx}" onclick="opTrendClear(opTrendShopId, this.dataset.i, this.dataset.z)">Remove</button>` : ''}
+      </div>`; }).join('')}
+    </div>`;
+    }
+    const o = opTrendItemOffer(p, it);
+    const cust = opTrendCust(p, it, it.price, false);
+    return `
     <div class="op-partner-item" style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
       <div style="min-width:0; flex:1 1 140px;">
         <div class="op-partner-name">${escapeHtml(it.name || 'Item')}</div>
-        <div class="op-partner-sub">Price ₹${escapeHtml(String(it.price))}${Number(it.offerPrice) > 0 ? ' · offer ₹' + escapeHtml(String(it.offerPrice)) : ''}</div>
+        <div class="op-partner-sub">Customer ${cust !== null ? '₹' + escapeHtml(money(cust)) : '…'} <span style="opacity:.7;">(shop ₹${escapeHtml(String(it.price))})</span>${o ? ' · offer ₹' + escapeHtml(money(o)) : ''}</div>
       </div>
-      <input type="number" inputmode="decimal" min="0" step="any" placeholder="Offer ₹" value="${Number(it.offerPrice) > 0 ? escapeHtml(String(it.offerPrice)) : ''}" style="width:90px;padding:8px;" id="op-trend-in-${escapeHtml(it._k)}">
+      <input type="number" inputmode="decimal" min="0" step="any" placeholder="Offer ₹" value="${o ? escapeHtml(String(o)) : ''}" style="width:90px;padding:8px;" id="op-trend-in-${escapeHtml(it._k)}">
       <button type="button" class="op-btn op-btn-push" style="margin:0;" data-i="${escapeHtml(it._k)}" onclick="opTrendSave(opTrendShopId, this.dataset.i)">Save</button>
-      ${Number(it.offerPrice) > 0 ? `<button type="button" class="op-btn op-btn-danger" style="margin:0;" data-i="${escapeHtml(it._k)}" onclick="opTrendClear(opTrendShopId, this.dataset.i)">Remove</button>` : ''}
-    </div>`).join('') : '<p class="op-note">No items.</p>';
+      ${o ? `<button type="button" class="op-btn op-btn-danger" style="margin:0;" data-i="${escapeHtml(it._k)}" onclick="opTrendClear(opTrendShopId, this.dataset.i)">Remove</button>` : ''}
+    </div>`; }).join('') : '<p class="op-note">No items.</p>';
 }
-function opTrendSave(shopId, itemKey) {
+// The offer is the price the CUSTOMER pays. z = portion index for a Food item sold in portions, empty for a normal one-price item.
+function opTrendSave(shopId, itemKey, z) {
   const p = opAllPartners.find(x => x._id === shopId);
   const it = p && p.menu && p.menu[itemKey];
   const status = document.getElementById('op-trend-status');
-  const inp = document.getElementById('op-trend-in-' + itemKey);
-  if (!it || !inp) return;
-  const v = Number(inp.value);
-  if (!isFinite(v) || v <= 0 || v >= Number(it.price)) { status.textContent = 'Offer price must be above ₹0 and lower than the normal price (₹' + it.price + ').'; return; }
+  if (!it) return;
+  if (!opTrendCfg.loaded) { status.textContent = 'Customer prices are still loading — try again in a moment.'; opTrendLoadCfg(); return; }
+  const isPortion = z !== undefined && z !== null && z !== '';
   const { db, ref, update } = window.fb;
+  if (isPortion) {
+    const sz = opTrendPortions(p, it)[Number(z)];
+    const inp = document.getElementById('op-trend-pin-' + itemKey + '-' + Number(z));
+    if (!sz || !inp) return;
+    const normal = opTrendCust(p, it, it.sizePrices[sz], true, sz);
+    const v = Number(inp.value);
+    if (inp.value.trim() === '' || !isFinite(v) || v <= 0 || v >= normal) { status.textContent = 'Offer price must be above ₹0 and lower than the customer price of the ' + sz + ' portion (₹' + normal + ').'; return; }
+    const map = {};
+    opTrendPortions(p, it).forEach(k => { const o = opTrendPortionOffer(p, it, k); if (o) map[k] = o; });
+    map[sz] = v;
+    status.textContent = 'Saving...';
+    update(ref(db, 'restaurants/' + shopId + '/menu/' + itemKey), { offerCustomerSizePrices: map, offerSizePrices: null }).then(() => {
+      it.offerCustomerSizePrices = map; it.offerSizePrices = null;
+      status.textContent = 'Saved — customers pay ₹' + v + ' for "' + (it.name || 'Item') + ' (' + sz + ')" (customer price ₹' + normal + '). It is now in ' + opTrendWhere(p) + '.'; opRenderTrending();
+    }).catch(err => { status.textContent = 'Error: ' + err.message; });
+    return;
+  }
+  const inp = document.getElementById('op-trend-in-' + itemKey);
+  if (!inp) return;
+  const normal = opTrendCust(p, it, it.price, false);
+  const v = Number(inp.value);
+  if (inp.value.trim() === '' || !isFinite(v) || v <= 0 || normal === null || v >= normal) { status.textContent = 'Offer price must be above ₹0 and lower than the customer price (₹' + normal + ').'; return; }
   status.textContent = 'Saving...';
-  update(ref(db, 'restaurants/' + shopId + '/menu/' + itemKey), { offerPrice: v }).then(() => {
-    it.offerPrice = v; status.textContent = 'Saved — "' + (it.name || 'Item') + '" is now in Trending.'; opRenderTrending();
+  update(ref(db, 'restaurants/' + shopId + '/menu/' + itemKey), { offerCustomerPrice: v, offerPrice: null }).then(() => {
+    it.offerCustomerPrice = v; it.offerPrice = null;
+    status.textContent = 'Saved — customers pay ₹' + v + ' for "' + (it.name || 'Item') + '" (customer price ₹' + normal + '). It is now in ' + opTrendWhere(p) + '.'; opRenderTrending();
   }).catch(err => { status.textContent = 'Error: ' + err.message; });
 }
-function opTrendClear(shopId, itemKey) {
+function opTrendClear(shopId, itemKey, z) {
   const p = opAllPartners.find(x => x._id === shopId);
   const it = p && p.menu && p.menu[itemKey];
   if (!it) return;
-  if (!confirm('Remove the offer on "' + (it.name || 'this item') + '"? It leaves Trending right away.')) return;
+  const isPortion = z !== undefined && z !== null && z !== '';
   const { db, ref, update } = window.fb;
-  update(ref(db, 'restaurants/' + shopId + '/menu/' + itemKey), { offerPrice: null }).then(() => {
-    delete it.offerPrice; const st = document.getElementById('op-trend-status'); if (st) st.textContent = 'Offer removed.'; opRenderTrending();
+  if (isPortion) {
+    if (!opTrendCfg.loaded) { opTrendLoadCfg(); return; }
+    const sz = opTrendPortions(p, it)[Number(z)];
+    if (!sz) return;
+    if (!confirm('Remove the offer on "' + (it.name || 'this item') + '" (' + sz + ')? It leaves the Food Offers strip right away.')) return;
+    const map = {};
+    opTrendPortions(p, it).forEach(k => { const o = opTrendPortionOffer(p, it, k); if (o && k !== sz) map[k] = o; });
+    const val = Object.keys(map).length ? map : null;
+    update(ref(db, 'restaurants/' + shopId + '/menu/' + itemKey), { offerCustomerSizePrices: val, offerSizePrices: null }).then(() => {
+      it.offerCustomerSizePrices = val; it.offerSizePrices = null;
+      const st = document.getElementById('op-trend-status'); if (st) st.textContent = 'Offer removed.'; opRenderTrending();
+    }).catch(err => { alert('Error: ' + err.message); });
+    return;
+  }
+  if (!confirm('Remove the offer on "' + (it.name || 'this item') + '"? It leaves ' + opTrendWhere(p) + ' right away.')) return;
+  update(ref(db, 'restaurants/' + shopId + '/menu/' + itemKey), { offerCustomerPrice: null, offerPrice: null }).then(() => {
+    it.offerCustomerPrice = null; it.offerPrice = null; const st = document.getElementById('op-trend-status'); if (st) st.textContent = 'Offer removed.'; opRenderTrending();
   }).catch(err => { alert('Error: ' + err.message); });
 }
 
@@ -10694,6 +12267,7 @@ function opDeletePushedAppUpdate() {
    Kept in sync here: missing shops are added, deleted shops are removed. */
 let opShopIndex = null, opShopIndexBusy = false, opShopIndexFailed = false;
 function opHealShopIndex(list) {
+  if (opZoneSel !== '__all__') return;   // partial list (zone load) must never delete ids from the customer index
   if (opShopIndex === null || opShopIndexBusy || opShopIndexFailed || !Array.isArray(list) || !list.length) return;
   const ids = new Set(list.map(p => p._id));
   const diff = {}; let n = 0;
@@ -10704,20 +12278,159 @@ function opHealShopIndex(list) {
   const { db, ref, update } = window.fb;
   update(ref(db, 'shopIds'), diff).catch(() => { opShopIndexFailed = true; }).finally(() => { opShopIndexBusy = false; });
 }
+/* Keeps shopIds in step with the real shops WITHOUT downloading them: Firebase's REST `shallow=true`
+   returns only the shop ids (a few KB). Adds shops missing from the index (customer app lists shops from it)
+   and removes ids of deleted shops. Runs once per panel session; any failure just skips it. */
+let opShallowHealDone = false;
+async function opHealIndexShallow() {
+  if (opShallowHealDone || opShopIndex === null || opShopIndexBusy || opShopIndexFailed) return;
+  opShallowHealDone = true;
+  try {
+    const url = 'https://texi-and-food-default-rtdb.firebaseio.com/restaurants.json?shallow=true';
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const real = await res.json();
+    if (!real || typeof real !== 'object') return;
+    const ids = Object.keys(real);
+    if (!ids.length) return;                       // never wipe the index on an odd answer
+    const diff = {}; let n = 0;
+    ids.forEach(id => { if (!(id in opShopIndex)) { diff[id] = true; n++; } });
+    Object.keys(opShopIndex).forEach(id => { if (!(id in real)) { diff[id] = null; n++; } });
+    if (!n) return;
+    opShopIndexBusy = true;
+    const { db, ref, update } = window.fb;
+    await update(ref(db, 'shopIds'), diff).catch(() => { opShopIndexFailed = true; });
+    opShopIndexBusy = false;
+  } catch (e) { opShopIndexBusy = false; }
+}
 /* ---- Restaurant Partners list ---- */
 function opListenPartners() {
-  const { db, ref, onValue, update } = window.fb;
+  const { db, ref, onValue, update, get, set } = window.fb;
   opListenShopZones();
   onValue(ref(db, 'shopIds'), snap => {
     opShopIndex = snap.val() || {};
     try { opHealShopIndex(opAllPartners); } catch (e) {}
+    try { opHealIndexShallow(); } catch (e) {}
+    try { if (opZoneSel === '__none__') opSyncPartnerLoad(); } catch (e) {}
+    try { if (opZoneSel === '__all__' && !opFullUnsub) opSyncPartnerLoad(); } catch (e) {}
   }, () => { opShopIndexFailed = true; });
-  onValue(ref(db, 'restaurants'), snap => {
-    try { opMeasure('restaurants', snap); } catch (e) {}
-    const list = [];
-    snap.forEach(child => { list.push(Object.assign({ _id: child.key }, child.val())); });
+  opFillLoadZoneSelect();
+  opSyncPartnerLoad();
+  try { get(ref(db, 'catalogVer')).then(sn => { if (!sn.exists()) return set(ref(db, 'catalogVer'), Date.now()); }).catch(() => {}); } catch (e) {}
+}
+/* ---- Zone-based shop loading (bandwidth saver) ----
+   Used to download the WHOLE /restaurants node (every shop + every order) on each operator open.
+   Now nothing loads until a zone is picked; then only restaurants/{id} of that zone's shops are
+   listened to (live, so stock/menu/order changes still arrive instantly).
+   '__all__' = old full load, '__none__' = shops that are in no zone (new/pending shops). */
+let opZoneSel = '', opFullUnsub = null, opApplyTimer = null, opLightMode = false;
+const opLightData = {};
+const opShopSubs = {}, opShopData = {};
+function opFillLoadZoneSelect() {
+  const sel = document.getElementById('op-load-zone');
+  if (!sel) return;
+  const cur = opZoneSel;
+  sel.innerHTML = '<option value="">— Select a zone to load shops —</option>' +
+    (opShopZones || []).map(z => `<option value="${z._id}">${escapeHtml(z.name || z._id)}</option>`).join('') +
+    '<option value="__none__">Shops in no zone (new / pending)</option>' +
+    '<option value="__all__">ALL shops (full load - heavy)</option>';
+  sel.value = cur;
+  if (sel.value !== cur) sel.value = '';
+}
+function opSetLoadZone(v) { opZoneSel = v || ''; opSyncPartnerLoad(); }
+function opWantedShopIds() {
+  const want = new Set();
+  const zones = opShopZones || [];
+  const inZone = z => Object.keys(z.shopIds || {}).filter(k => z.shopIds[k]);
+  if (opZoneSel === '__none__') {
+    const used = new Set(); zones.forEach(z => inZone(z).forEach(id => used.add(id)));
+    Object.keys(opShopIndex || {}).forEach(id => { if (!used.has(id)) want.add(id); });
+  } else if (opZoneSel) {
+    const z = zones.find(x => x._id === opZoneSel);
+    if (z) inZone(z).forEach(id => want.add(id));
+  }
+  return want;
+}
+function opScheduleApply() {
+  clearTimeout(opApplyTimer);
+  opApplyTimer = setTimeout(() => {
+    if (opLightMode) {
+      const llist = Object.keys(opLightData).filter(id => opLightData[id]).map(id => Object.assign({ _id: id }, opLightData[id]));
+      try { opMeasure('restaurants', { val: () => opLightData }); } catch (e) {}
+      opApplyPartners(llist, false);
+      return;
+    }
+    const list = Object.keys(opShopData).map(id => opShopData[id]);
+    try { opMeasure('zone shops', { val: () => opShopData }); } catch (e) {}
+    opApplyPartners(list, false);
+  }, 40);
+}
+function opSyncPartnerLoad() {
+  const { db, ref, onValue } = window.fb;
+  if (opZoneSel === '__all__') {
+    Object.keys(opShopSubs).forEach(id => { try { opShopSubs[id](); } catch (e) {} delete opShopSubs[id]; delete opShopData[id]; });
+    // LIGHT load (bandwidth saver): Orders / Profit / Report need only each shop's orders,
+    // settlements, commission and name - NOT the menu, photos, categories. So read just those
+    // children per shop instead of the whole `restaurants` node. If the shop index is not
+    // available, fall back to the old full download.
+    if (opFullUnsub) return;
+    if (opShopIndex && !opShopIndexFailed) {
+      opLightMode = true;
+      const LIGHT = ['orders', 'settlements', 'commissionHistory', 'commissionTiers', 'restaurantName', 'approvalStatus', 'businessType', 'goSeries'];
+      const { query, orderByKey, startAt, endAt } = window.fb;
+      const dStr = opOrdersDayValue(), todayStr = opDateKey(Date.now());
+      const winFrom = opPushPrefix(opDayStartMs(dStr) - 864e5 - 600000);
+      const winTo = opPushPrefix(opDayStartMs(dStr) + 864e5 + 600000) + '~';
+      const unsubs = [];
+      Object.keys(opLightData).forEach(k => delete opLightData[k]);
+      Object.keys(opShopIndex).forEach(id => {
+        LIGHT.forEach(ch => {
+          let target = ref(db, 'restaurants/' + id + '/' + ch);
+          if (ch === 'orders') target = dStr < todayStr ? query(target, orderByKey(), startAt(winFrom), endAt(winTo)) : query(target, orderByKey(), startAt(winFrom));
+          unsubs.push(onValue(target, snap => {
+            const d = opLightData[id] || (opLightData[id] = {});
+            const v = snap.val();
+            if (v == null) delete d[ch]; else d[ch] = v;
+            opScheduleApply();
+          }, () => {}));
+        });
+      });
+      opFullUnsub = () => { unsubs.forEach(u => { try { u(); } catch (e) {} }); opLightMode = false; Object.keys(opLightData).forEach(k => delete opLightData[k]); };
+      opScheduleApply();
+      return;
+    }
+    opLightMode = false;
+    opFullUnsub = onValue(ref(db, 'restaurants'), snap => {
+      try { opMeasure('restaurants', snap); } catch (e) {}
+      const list = [];
+      snap.forEach(child => { list.push(Object.assign({ _id: child.key }, child.val())); });
+      opApplyPartners(list, true);
+    });
+    return;
+  }
+  const hadFull = !!opFullUnsub;
+  if (opFullUnsub) { try { opFullUnsub(); } catch (e) {} opFullUnsub = null; }
+  if (opShopIndex === null && opZoneSel === '__none__') return;   // shop index not here yet - called again when it arrives
+  const want = opWantedShopIds();
+  let changed = hadFull;
+  Object.keys(opShopSubs).forEach(id => {
+    if (!want.has(id)) { try { opShopSubs[id](); } catch (e) {} delete opShopSubs[id]; delete opShopData[id]; changed = true; }
+  });
+  want.forEach(id => {
+    if (opShopSubs[id]) return;
+    changed = true;
+    opShopSubs[id] = onValue(ref(db, 'restaurants/' + id), snap => {
+      if (snap.exists()) opShopData[id] = Object.assign({ _id: id }, snap.val()); else delete opShopData[id];
+      opScheduleApply();
+    }, () => {});
+  });
+  if (changed) opScheduleApply();
+}
+function opApplyPartners(list, full) {
+  const { db, ref, update } = window.fb;
+  {
     opAllPartners = list;
-    try { opHealShopIndex(list); } catch (e) {}
+    if (full) { try { opHealShopIndex(list); } catch (e) {} }
     // Keep an open "assign groceries order" screen in sync when a shop marks
     // an item unavailable/available (skipped while an assignment is running).
     try {
@@ -10761,7 +12474,7 @@ function opListenPartners() {
     if (neshCatSec && neshCatSec.classList.contains('active')) opRenderNeshCategories();
     const catEditorModal = document.getElementById('op-category-editor-modal');
     if (catEditorModal && catEditorModal.classList.contains('show')) opRenderCategoryEditorItems();
-  });
+  }
 }
 function opTypeLabel(t) { return t === 'groceries' ? 'Groceries' : t === 'online_shop' ? 'Other Shop' : 'Hotel'; }
 
@@ -12307,20 +14020,28 @@ async function opAssignGroceryOrder(orderId, shopId) {
 }
 
 /* ==================================================================
-   HOME CATEGORY ORDER — controls the order Food / Groceries /
-   Other Shop / Taxi appear in on the customer app's home screen.
+   HOME CATEGORY ORDER — controls the order Pravasi Hampers / Food /
+   Groceries / Other Shop / Taxi appear in on the customer app's home screen.
    Stored as an array of keys at app_config/categoryOrder.
    ================================================================== */
-const OP_CATEGORY_LABELS = { hotel: '🍔 Food', groceries: '🛒 Groceries', online_shop: '🛍️ Other Shop', taxi: '🚕 Taxi' };
-const OP_CATEGORY_DEFAULT_ORDER = ['hotel', 'groceries', 'online_shop', 'taxi'];
+const OP_CATEGORY_LABELS = { pravasi: '🎁 Pravasi Hampers', hotel: '🍔 Food', groceries: '🛒 Groceries', online_shop: '🛍️ Other Shop', taxi: '🚕 Taxi' };
+// Pravasi first = where its card already showed on the customer home screen, so nothing jumps until you move it.
+const OP_CATEGORY_DEFAULT_ORDER = ['pravasi', 'hotel', 'groceries', 'online_shop', 'taxi'];
+// An order saved before Pravasi was added only has the 4 old cards - still valid, Pravasi is put first.
+const OP_CATEGORY_LEGACY_KEYS = ['hotel', 'groceries', 'online_shop', 'taxi'];
+function opNormalizeCategoryOrder(val) {
+  if (!Array.isArray(val) || !OP_CATEGORY_LEGACY_KEYS.every(k => val.includes(k))) return OP_CATEGORY_DEFAULT_ORDER.slice();
+  const out = val.filter((k, i) => OP_CATEGORY_DEFAULT_ORDER.includes(k) && val.indexOf(k) === i);
+  if (!out.includes('pravasi')) out.unshift('pravasi');
+  return out;
+}
 let opCategoryOrderArr = null; // current working array, edited locally before Save
 
 function opListenCategoryOrder() {
   const { db, ref, onValue } = window.fb;
   onValue(ref(db, 'app_config/categoryOrder'), snap => {
     const val = snap.val();
-    const valid = Array.isArray(val) && val.length === OP_CATEGORY_DEFAULT_ORDER.length && OP_CATEGORY_DEFAULT_ORDER.every(k => val.includes(k));
-    opCategoryOrderArr = valid ? val.slice() : OP_CATEGORY_DEFAULT_ORDER.slice();
+    opCategoryOrderArr = opNormalizeCategoryOrder(val);
     const sec = document.getElementById('op-section-category-order');
     if (sec && sec.classList.contains('active')) opRenderCategoryOrder();
   });
@@ -12363,7 +14084,7 @@ function opSaveCategoryOrder() {
    needed. Kept live via onValue so a fresh category shows up in
    both places immediately, even in an already-open tab.
    ================================================================== */
-const SHOP_CATEGORY_DEFAULT = ['Mobile Shop', 'Sports'];
+const SHOP_CATEGORY_DEFAULT = ['Pravasi Hampers', 'Mobile Shop', 'Sports'];
 let shopCategoryList = SHOP_CATEGORY_DEFAULT.slice();
 
 function listenShopCategories() {
@@ -13135,6 +14856,44 @@ function opListenBusFeatureToggle() {
     }
   });
 }
+let opItemShareEnabled = true;
+function opListenItemShareToggle() {
+  const { db, ref, onValue } = window.fb;
+  onValue(ref(db, 'app_config/itemShareEnabled'), snap => {
+    opItemShareEnabled = snap.val() !== false;
+    const statusEl = document.getElementById('op-item-share-status');
+    const btn = document.getElementById('op-item-share-toggle-btn');
+    if (statusEl) statusEl.textContent = opItemShareEnabled ? '🟢 ON — customers can see it' : '⚪ OFF — hidden from customer app';
+    if (btn) {
+      btn.textContent = opItemShareEnabled ? '⛔ Turn OFF for customers' : '✅ Turn ON for customers';
+      btn.className = 'op-btn ' + (opItemShareEnabled ? 'op-btn-danger' : 'op-btn-push');
+    }
+  });
+}
+let opLoginOtpOff = false;   // app_config/otpOff === true means the customer app skips the login OTP
+function opListenLoginOtpToggle() {
+  const { db, ref, onValue } = window.fb;
+  onValue(ref(db, 'app_config/otpOff'), snap => {
+    opLoginOtpOff = snap.val() === true;
+    const statusEl = document.getElementById('op-login-otp-status');
+    const btn = document.getElementById('op-login-otp-toggle-btn');
+    if (statusEl) statusEl.textContent = opLoginOtpOff ? '⚪ OFF — number alone logs in' : '🟢 ON — SMS code at login';
+    if (btn) {
+      btn.textContent = opLoginOtpOff ? '✅ Turn OTP ON' : '⛔ Turn OTP OFF';
+      btn.className = 'op-btn ' + (opLoginOtpOff ? 'op-btn-push' : 'op-btn-danger');
+    }
+  });
+}
+function opToggleLoginOtp() {
+  const { db, ref, set } = window.fb;
+  const turnOff = !opLoginOtpOff;
+  if (turnOff && !confirm('Turn the login OTP OFF? Anyone who knows a mobile number will be able to log in as that customer.')) return;
+  set(ref(db, 'app_config/otpOff'), turnOff).catch(err => alert('Error: ' + err.message));
+}
+function opToggleItemShare() {
+  const { db, ref, set } = window.fb;
+  set(ref(db, 'app_config/itemShareEnabled'), !opItemShareEnabled).catch(err => alert('Error: ' + err.message));
+}
 function opToggleBusFeature() {
   const { db, ref, set } = window.fb;
   set(ref(db, 'app_config/busFeatureEnabled'), !opBusFeatureEnabled).catch(err => alert('Error: ' + err.message));
@@ -13450,6 +15209,10 @@ document.getElementById('op-bus-search').addEventListener('input', () => {
    ================================================================== */
 let opAllDrivers = [];
 let opCurrentDriverId = null;
+/* Data saver: taxi_drivers / rides are downloaded only when a screen that needs them is first opened. */
+let opDriversStarted = false, opRidesStarted = false;
+function opEnsureDrivers() { if (opDriversStarted) return; opDriversStarted = true; try { opListenDrivers(); } catch (e) { opDriversStarted = false; } }
+function opEnsureRides() { if (opRidesStarted) return; opRidesStarted = true; try { opListenRides(); } catch (e) { opRidesStarted = false; } }
 function opListenDrivers() {
   const { db, ref, onValue } = window.fb;
   onValue(ref(db, 'taxi_drivers'), snap => {
@@ -13743,6 +15506,7 @@ function opListenRides() {
     const list = [];
     snap.forEach(child => { list.push(Object.assign({ _id: child.key }, child.val())); });
     opAllRides = list;
+    try { const da = document.getElementById('op-section-delete-all'); if (da && da.classList.contains('active')) opRenderDeleteAllPreview(); } catch (e) {}
     if (opCurrentDriverId && document.getElementById('op-driver-modal').classList.contains('show')) {
       opPopulateDriverOrderSelect();
     }
@@ -13900,31 +15664,170 @@ function opLoadProfitStart() {
   } catch (e) {}
 }
 function opFmtMoney(n) { n = Math.round(n * 100) / 100; return (n < 0 ? '-' : '') + '₹' + Math.abs(n); }
+/* ---- Profit archive: per-day totals saved in profitDaily/{YYYY-MM-DD} = {count, net} ----
+   Written from the orders while they still exist and never lowered, so deleting orders later
+   does not delete their profit. Order Profit shows max(live orders, archive) for every day. */
+let opProfitDaily = {}, opProfitDailyLoaded = false, opProfitArchiveMsg = '', opProfitArchiveBusy = false;
+function opProfitLiveDays(liveAll, histByShop) {
+  const days = {};
+  liveAll.forEach(o => {
+    if (!o.createdAt) return;
+    const d = new Date(o.createdAt).toLocaleDateString('en-CA');
+    const r = opOrderProfit(o, histByShop[o._shopId]);
+    const x = days[d] || (days[d] = { count: 0, net: 0 });
+    x.count++; x.net += r.net;
+  });
+  Object.keys(days).forEach(d => { days[d].net = Math.round(days[d].net * 100) / 100; });
+  return days;
+}
+async function opLoadProfitDaily() {
+  try {
+    const { db, ref, get } = window.fb;
+    const v = (await get(ref(db, 'profitDaily'))).val() || {};
+    opProfitDaily = v; opProfitDailyLoaded = true;
+    opProfitArchiveMsg = '';
+    opRenderProfit();
+    try { opProfitBoot(); } catch (e3) {}
+  } catch (e) { opProfitArchiveMsg = '⚠ Profit archive could not be read (check database rules for profitDaily)'; try { opRenderProfit(); } catch (e2) {} }
+}
+async function opProfitArchiveSync(liveDays) {
+  // Only with ALL shops loaded (a zone-only list would undercount a day), and after the archive was read.
+  if (!opProfitDailyLoaded || opProfitArchiveBusy) return;
+  const { db, ref, update } = window.fb;
+  const up = {};
+  Object.keys(liveDays).forEach(d => {
+    const a = opProfitDaily[d], l = liveDays[d];
+    if (!a || l.count > a.count) up[d] = { count: l.count, net: l.net, at: Date.now() };
+  });
+  const keys = Object.keys(up);
+  if (!keys.length) return;
+  opProfitArchiveBusy = true;
+  try {
+    await update(ref(db, 'profitDaily'), up);
+    keys.forEach(d => { opProfitDaily[d] = up[d]; });
+    opProfitArchiveMsg = '';
+  } catch (e) {
+    opProfitArchiveMsg = '⚠ Profit archive NOT saved (database rules block profitDaily) - do not delete orders yet';
+  }
+  opProfitArchiveBusy = false;
+}
+/* ---- Order Profit data (date-wise, one-shot reads) ----
+   Order keys are push() ids = time ordered, so one day's orders per shop are read with a key range
+   (restaurants/{id}/orders orderByKey startAt..endAt). Nothing else of the shop is downloaded.
+   All-time profit = sum of the profitDaily archive (+ any loaded day that is newer than its archive). */
+const OP_PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
+function opPushPrefix(t) { let s2 = ''; t = Math.max(0, Math.floor(t)); for (let i = 0; i < 8; i++) { s2 = OP_PUSH_CHARS.charAt(t % 64) + s2; t = Math.floor(t / 64); } return s2; }
+function opDayStartMs(d) { const a = d.split('-').map(Number); return new Date(a[0], a[1] - 1, a[2]).getTime(); }
+function opDayKeyOf(ms) { return new Date(ms).toLocaleDateString('en-CA'); }
+let opProfitOrderMap = {}, opProfitOrders = [], opProfitShops = {}, opProfitLoadedDays = new Set(), opProfitChain = Promise.resolve(), opProfitBusy = 0, opProfitErr = '';
+function opProfitRebuild() {
+  opProfitOrders = Object.keys(opProfitOrderMap).map(k => opProfitOrderMap[k]);
+}
+async function opProfitLoadDays(days) {
+  const need = days.filter(d => d && !opProfitLoadedDays.has(d)).sort();
+  if (!need.length) return;
+  opProfitBusy++;
+  try { opRenderProfit(); } catch (e) {}
+  const { db, ref, get, query, orderByKey, startAt, endAt } = window.fb;
+  try {
+    const ids = Object.keys(opShopIndex || {});
+    if (!opShopIndex) throw new Error('shop list not ready');
+    const from = opDayStartMs(need[0]) - 600000, to = opDayStartMs(need[need.length - 1]) + 864e5 + 600000;
+    const k1 = opPushPrefix(from), k2 = opPushPrefix(to) + '~';
+    const fresh = {};
+    let idx = 0;
+    const worker = async () => {
+      while (idx < ids.length) {
+        const id = ids[idx++];
+        try {
+          if (!opProfitShops[id]) {
+            const [nm, ch] = await Promise.all([get(ref(db, 'restaurants/' + id + '/restaurantName')), get(ref(db, 'restaurants/' + id + '/commissionHistory'))]);
+            opProfitShops[id] = { name: nm.val() || id, commissionHistory: ch.val() || null };
+          }
+          const snap = await get(query(ref(db, 'restaurants/' + id + '/orders'), orderByKey(), startAt(k1), endAt(k2)));
+          snap.forEach(c => { fresh[id + '/' + c.key] = Object.assign({ _shopId: id, _shopName: opProfitShops[id].name, _id: c.key }, c.val() || {}); });
+        } catch (e) { throw e; }
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
+    // replace everything inside the loaded window, keep the rest
+    Object.keys(opProfitOrderMap).forEach(k => { const c = Number(opProfitOrderMap[k].createdAt) || 0; if (c >= from && c <= to) delete opProfitOrderMap[k]; });
+    Object.assign(opProfitOrderMap, fresh);
+    opProfitRebuild();
+    for (let t = opDayStartMs(need[0]); t <= opDayStartMs(need[need.length - 1]); t += 864e5) opProfitLoadedDays.add(opDayKeyOf(t + 3600000));
+    opProfitErr = '';
+  } catch (e) { opProfitErr = '⚠ Could not load orders (' + (e && e.message || e) + ') — pick the date again to retry'; }
+  opProfitBusy--;
+  try { opRenderProfit(); } catch (e) {}
+}
+function opProfitQueue(days) { opProfitChain = opProfitChain.then(() => opProfitLoadDays(days)).catch(() => {}); return opProfitChain; }
+// Called once the archive is read: loads the picked date + any days not yet in the archive (normally just today).
+function opProfitBoot() {
+  if (!opProfitStartAt) { setTimeout(opProfitBoot, 800); return; }
+  const dEl = document.getElementById('op-profit-date');
+  const sel = (dEl && dEl.value) || opDayKeyOf(Date.now());
+  const arch = Object.keys(opProfitDaily).sort();
+  const first = arch.length ? arch[arch.length - 1] : opDayKeyOf(opProfitStartAt);
+  const days = [];
+  for (let t = opDayStartMs(first); t <= Date.now() && days.length < 62; t += 864e5) days.push(opDayKeyOf(t + 3600000));
+  days.push(sel);
+  opProfitQueue(Array.from(new Set(days)));
+}
+function opProfitDateChanged() {
+  const dEl = document.getElementById('op-profit-date');
+  if (dEl && dEl.value) opProfitQueue([dEl.value]);
+  opRenderProfit();
+}
 function opRenderProfit() {
   const listEl = document.getElementById('op-profit-list');
   const sumEl = document.getElementById('op-profit-summary');
   if (!listEl || !sumEl) return;
   const dateEl = document.getElementById('op-profit-date');
-  const allEl = document.getElementById('op-profit-all');
-  const day = (dateEl && dateEl.value) || '';
-  const allDates = !!(allEl && allEl.checked);
+  const day = (dateEl && dateEl.value) || opDayKeyOf(Date.now());
   const startNote = document.getElementById('op-profit-start');
   if (startNote) startNote.textContent = opProfitStartAt ? 'Recording orders placed from ' + new Date(opProfitStartAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' onwards.' : 'Loading…';
   if (!opProfitStartAt) { sumEl.innerHTML = ''; listEl.innerHTML = '<div class="op-empty">Loading…</div>'; return; }
-  let list = opFlattenAllOrders().filter(o => ['delivered', 'completed', 'done'].includes((o.status || '').toLowerCase()) && (Number(o.createdAt) || 0) >= opProfitStartAt);
-  if (!allDates && day) list = list.filter(o => o.createdAt && new Date(o.createdAt).toLocaleDateString('en-CA') === day);
+  // only orders of fully loaded days (a day at the edge of a query window is partial)
+  const liveAll = opProfitOrders.filter(o => ['delivered', 'completed', 'done'].includes((o.status || '').toLowerCase()) && (Number(o.createdAt) || 0) >= opProfitStartAt && opProfitLoadedDays.has(opDayKeyOf(Number(o.createdAt) || 0)));
+  const dayLoaded = opProfitLoadedDays.has(day);
+  let list = liveAll.filter(o => o.createdAt && opDayKeyOf(o.createdAt) === day);
   list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   let total = 0;
   const histByShop = {};
-  opAllPartners.forEach(pt => { histByShop[pt._id] = pt.commissionHistory; });
+  Object.keys(opProfitShops).forEach(id => { histByShop[id] = opProfitShops[id].commissionHistory; });
   const rows = list.map(o => { const r = opOrderProfit(o, histByShop[o._shopId]); total += r.net; return { o, r }; });
   total = Math.round(total * 100) / 100;
+  let shownCount = list.length, archNote = '';
+  let allCount = 0, allNet = 0;
+  try {
+    const liveDays = opProfitLiveDays(liveAll, histByShop);
+    opProfitArchiveSync(liveDays);
+    const a0 = opProfitDaily[day], l0 = liveDays[day] || { count: 0, net: 0 };
+    if (a0 && a0.count > l0.count) {
+      const xc = a0.count - l0.count, xn = (Number(a0.net) || 0) - l0.net;
+      shownCount += xc; total = Math.round((total + xn) * 100) / 100;
+      archNote = xc + ' deleted order' + (xc > 1 ? 's' : '') + ' counted from the saved profit archive';
+    }
+    const keys = new Set(Object.keys(opProfitDaily).concat(Object.keys(liveDays)));
+    keys.forEach(d => {
+      const a = opProfitDaily[d], l = liveDays[d];
+      const use = (l && (!a || l.count >= a.count)) ? l : a;
+      if (use) { allCount += Number(use.count) || 0; allNet += Number(use.net) || 0; }
+    });
+    allNet = Math.round(allNet * 100) / 100;
+    if (opProfitArchiveMsg) archNote += (archNote ? ' · ' : '') + opProfitArchiveMsg;
+  } catch (e) {}
+  if (opProfitErr) archNote += (archNote ? ' · ' : '') + opProfitErr;
+  const col = v => (v < 0 ? '#dc2626' : '#14532d');
   sumEl.innerHTML =
-    '<div class="op-report-summary-item"><div class="n">' + list.length + '</div><div class="l">Delivered orders</div></div>' +
-    '<div class="op-report-summary-item"><div class="n" style="color:' + (total < 0 ? '#dc2626' : '#14532d') + '">' + opFmtMoney(total) + '</div><div class="l">Total profit</div></div>';
-  if (!rows.length) { listEl.innerHTML = '<div class="op-empty">No delivered orders for this date.</div>'; return; }
+    '<div class="op-report-summary-item"><div class="n">' + shownCount + '</div><div class="l">Delivered orders (this date)</div></div>' +
+    '<div class="op-report-summary-item"><div class="n" style="color:' + col(total) + '">' + opFmtMoney(total) + '</div><div class="l">Profit (this date)</div></div>' +
+    '<div class="op-report-summary-item"><div class="n" style="color:' + col(allNet) + '">' + opFmtMoney(allNet) + '</div><div class="l">All-time profit · ' + allCount + ' orders</div></div>';
+  const noteHtml = archNote ? '<div class="op-note" style="margin:0 0 8px;">🗄 ' + escapeHtml(archNote) + '</div>' : '';
+  if (!dayLoaded && opProfitBusy > 0) { listEl.innerHTML = noteHtml + '<div class="op-empty">Loading this date…</div>'; return; }
+  if (!rows.length) { listEl.innerHTML = noteHtml + '<div class="op-empty">' + (shownCount > 0 ? 'Order details were deleted — only the saved profit total is shown.' : 'No delivered orders for this date.') + '</div>'; return; }
   const line = (label, val, sign) => '<div style="display:flex;justify-content:space-between;gap:10px;font-size:.9rem;padding:2px 0;color:#374151;"><span>' + label + '</span><span style="white-space:nowrap;">' + sign + ' ₹' + Math.abs(Math.round(val * 100) / 100) + '</span></div>';
-  listEl.innerHTML = rows.map(({ o, r }) =>
+  listEl.innerHTML = noteHtml + rows.map(({ o, r }) =>
     '<div class="op-order-item">' +
       '<div class="op-order-top"><span class="op-order-shop">' + escapeHtml(o._shopName || '') + '</span>' +
       '<span class="op-order-no">#' + escapeHtml(String(o.orderNumber || o._id || '')) + '</span></div>' +
@@ -13940,6 +15843,15 @@ function opRenderProfit() {
       '<div class="op-order-amt" style="border-top:1px solid #cfe6d5;margin-top:6px;padding-top:6px;"><span>You earn</span><b style="color:' + (r.net < 0 ? '#dc2626' : '#14532d') + '">' + opFmtMoney(r.net) + '</b></div>' +
     '</div>'
   ).join('');
+}
+let opOrdersDay = '';
+function opOrdersDayValue() { return opOrdersDay || opDateKey(Date.now()); }
+function opOrdersDayChanged() {
+  const el = document.getElementById('op-orders-date');
+  opOrdersDay = (el && el.value) || '';
+  if (opFullUnsub) { try { opFullUnsub(); } catch (e) {} opFullUnsub = null; }
+  if (opZoneSel === '__all__') { try { opSyncPartnerLoad(); } catch (e) {} }
+  opRenderOrdersList();
 }
 function opSwitchOrdersTab(tab) {
   opOrdersTab = tab;
@@ -13961,6 +15873,7 @@ function opRenderOrdersList() {
     if (opOrdersTab === 'cancelled') return ['cancelled', 'rejected'].includes(status);
     return !['delivered', 'completed', 'done', 'cancelled', 'rejected'].includes(status); // in progress
   });
+  if (opOrdersTab !== 'inprogress') { const dd = opOrdersDayValue(); list = list.filter(o => opDateKey(o.createdAt) === dd); }
   if (q) {
     list = list.filter(o =>
       (o._shopName || '').toLowerCase().includes(q) ||
@@ -14111,8 +16024,9 @@ function opRenderReportShopList() {
   const wrap = document.getElementById('op-report-shop-list');
   if (!wrap) return;
   const q = (document.getElementById('op-report-shop-search').value || '').toLowerCase();
-  const filtered = opAllPartners.filter(p => !q || (p.restaurantName || '').toLowerCase().includes(q) || p._id.toLowerCase().includes(q));
-  if (!filtered.length) { wrap.innerHTML = '<div class="op-empty">No restaurant partners found.</div>'; return; }
+  const src = Object.keys(opLiteShops).length ? Object.keys(opLiteShops).map(id => opLiteShops[id]) : opAllPartners;
+  const filtered = src.filter(p => !q || (p.restaurantName || '').toLowerCase().includes(q) || p._id.toLowerCase().includes(q)).sort((a, b) => String(a.restaurantName || a._id).localeCompare(String(b.restaurantName || b._id)));
+  if (!filtered.length) { wrap.innerHTML = '<div class="op-empty">' + (opLiteShopsBusy ? 'Loading shops…' : 'No restaurant partners found.') + '</div>'; return; }
   wrap.innerHTML = filtered.map(p => `
     <div class="op-partner-item" onclick="opOpenReportShop('${p._id}')">
       <div class="op-partner-top">
@@ -14122,8 +16036,51 @@ function opRenderReportShopList() {
     </div>
   `).join('');
 }
+/* Daily Report data saver: shop names come from 2 tiny fields per shop; the orders of ONE shop for
+   ONE date are read with a key range (order keys are push() ids = time ordered). */
+let opLiteShops = {}, opLiteShopsBusy = false, opReportLoadedKey = '', opReportOrdersRaw = [], opReportLoading = false, opReportErr = '';
+async function opLoadLiteShops() {
+  if (opLiteShopsBusy) return;
+  if (!opShopIndex) { setTimeout(opLoadLiteShops, 800); return; }
+  const ids = Object.keys(opShopIndex).filter(id => !opLiteShops[id]);
+  if (!ids.length) return;
+  opLiteShopsBusy = true;
+  const { db, ref, get } = window.fb;
+  let i = 0;
+  const worker = async () => {
+    while (i < ids.length) {
+      const id = ids[i++];
+      try {
+        const [nm, bt] = await Promise.all([get(ref(db, 'restaurants/' + id + '/restaurantName')), get(ref(db, 'restaurants/' + id + '/businessType'))]);
+        opLiteShops[id] = { _id: id, restaurantName: nm.val() || id, businessType: bt.val() || '' };
+      } catch (e) {}
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
+  opLiteShopsBusy = false;
+  try { opRenderReportShopList(); } catch (e) {}
+}
+async function opReportLoad() {
+  const dateVal = (document.getElementById('op-report-date-input') || {}).value;
+  if (!opReportShopId || !dateVal) return;
+  const key = opReportShopId + '|' + dateVal;
+  if (opReportLoadedKey === key) return;
+  opReportLoadedKey = key; opReportLoading = true; opReportOrdersRaw = []; opReportErr = '';
+  try { opRenderReportOrders(); } catch (e) {}
+  try {
+    const { db, ref, get, query, orderByKey, startAt, endAt } = window.fb;
+    const t0 = opDayStartMs(dateVal);
+    const snap = await get(query(ref(db, 'restaurants/' + opReportShopId + '/orders'), orderByKey(), startAt(opPushPrefix(t0 - 600000)), endAt(opPushPrefix(t0 + 864e5 + 600000) + '~')));
+    if (opReportLoadedKey !== key) return;
+    const arr = [];
+    snap.forEach(c => { arr.push(Object.assign({ _id: c.key }, c.val() || {})); });
+    opReportOrdersRaw = arr;
+  } catch (e) { opReportLoadedKey = ''; opReportErr = 'Could not load orders (' + (e && e.message || e) + ') - pick the date again to retry.'; }
+  opReportLoading = false;
+  try { opRenderReportOrders(); } catch (e) {}
+}
 function opOpenReportShop(id) {
-  const p = opAllPartners.find(x => x._id === id);
+  const p = opLiteShops[id] || opAllPartners.find(x => x._id === id);
   opReportShopId = id;
   opReportShopName = (p && p.restaurantName) || id;
   document.getElementById('op-report-shop-name').textContent = opReportShopName;
@@ -14139,12 +16096,12 @@ function opRenderReportOrders() {
   const summaryEl = document.getElementById('op-report-summary');
   const delBtn = document.getElementById('op-report-delete-btn');
   if (!listEl || !opReportShopId) return;
-  const p = opAllPartners.find(x => x._id === opReportShopId);
   const dateVal = document.getElementById('op-report-date-input').value;
+  if (dateVal && opReportLoadedKey !== opReportShopId + '|' + dateVal) { opReportLoad(); return; }
+  if (opReportLoading) { listEl.innerHTML = '<div class="op-empty">Loading this date…</div>'; document.getElementById('op-report-summary').innerHTML = ''; delBtn.style.display = 'none'; return; }
+  if (opReportErr) { listEl.innerHTML = '<div class="op-empty">' + escapeHtml(opReportErr) + '</div>'; document.getElementById('op-report-summary').innerHTML = ''; delBtn.style.display = 'none'; return; }
 
-  const matched = (p && p.orders && dateVal)
-    ? Object.keys(p.orders).map(oid => Object.assign({ _id: oid }, p.orders[oid])).filter(o => opDateKey(o.createdAt) === dateVal)
-    : [];
+  const matched = dateVal ? opReportOrdersRaw.filter(o => opDateKey(o.createdAt) === dateVal) : [];
   opReportOrdersCache = matched;
 
   if (!matched.length) {
@@ -14199,7 +16156,7 @@ function opDeleteReportDate() {
   opReportOrdersCache.forEach(o => { updates[o._id] = null; });
   update(ref(db, 'restaurants/' + opReportShopId + '/orders'), updates).then(() => {
     delStatus.textContent = 'Deleted ' + opReportOrdersCache.length + ' order(s) for ' + dateVal + '.';
-    opReportOrdersCache = [];
+    opReportOrdersCache = []; opReportOrdersRaw = [];
     document.getElementById('op-report-orders-list').innerHTML = '<div class="op-empty">No orders on this date.</div>';
     document.getElementById('op-report-summary').innerHTML = '';
     document.getElementById('op-report-delete-btn').style.display = 'none';
@@ -14210,6 +16167,7 @@ function opDeleteReportDate() {
 let opDelAllOrdersCache = []; // flattened shop orders (each has _shopId, _id) matched to the picked date
 let opDelAllRidesCache = [];  // rides (each has _id) matched to the picked date
 function opOpenDeleteAllSection() {
+  opEnsureRides();
   document.getElementById('op-delall-status').textContent = '';
   const dateInput = document.getElementById('op-delall-date-input');
   if (!dateInput.value) dateInput.value = opDateKey(Date.now());
@@ -14284,7 +16242,42 @@ function opComputeDue(p) {
   }
   return Math.max(0, gross - settled);
 }
+// ---- Old shop/item photos waiting to be deleted from Cloudinary (entries in notif_images with src:'shop') ----
+var opShopPhotoLastCount = 0;
+async function opShopPhotoCount() {
+  var el = document.getElementById('op-shopphoto-count'); if (!el || !window.fb) return;
+  try {
+    var snap = await window.fb.get(window.fb.ref(window.fb.db, 'notif_images')), v = snap.val() || {};
+    var n = Object.keys(v).filter(function (k) { return v[k] && v[k].src === 'shop'; }).length;
+    el.textContent = n ? '(' + n + ' pending)' : '';
+  } catch (e) {}
+}
+var opShopPhotoBusy = false;
+async function opShopPhotoCleanup() {
+  var fb = window.fb, msg = document.getElementById('op-shopphoto-status');
+  if (opShopPhotoBusy) return;
+  if (!fb || !window.POSTER_DELETE_ENDPOINT) { if (msg) msg.textContent = 'Set POSTER_DELETE_ENDPOINT first (Cloudinary delete worker).'; return; }
+  opShopPhotoBusy = true;
+  try {
+    var snap = await fb.get(fb.ref(fb.db, 'notif_images')), v = snap.val() || {};
+    var ids = Object.keys(v).filter(function (k) { return v[k] && v[k].src === 'shop'; });
+    if (!ids.length) { if (msg) msg.textContent = 'No old shop/item photos waiting.'; return; }
+    var n = 0, bad = 0, kept = 0;
+    for (var i = 0; i < ids.length; i++) {
+      if (msg) msg.textContent = 'Deleting ' + (i + 1) + '/' + ids.length + '...';
+      try {
+        if (await nshPhotoStillUsed(v[ids[i]].img)) { await fb.remove(fb.ref(fb.db, 'notif_images/' + ids[i])); kept++; continue; } // another shop/item uses it: keep photo
+        var r = await fetch(window.POSTER_DELETE_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'notif', id: ids[i] }) });
+        var j = await r.json().catch(function () { return {}; });
+        if (r.ok && j.ok) { await fb.remove(fb.ref(fb.db, 'notif_images/' + ids[i])); n++; } else bad++;
+      } catch (e) { bad++; }
+    }
+    if (msg) msg.textContent = n + ' photo(s) deleted from Cloudinary' + (kept ? ', ' + kept + ' still used by another shop/item (kept)' : '') + (bad ? ', ' + bad + ' failed (try again later)' : '') + '.';
+  } catch (e) { if (msg) msg.textContent = 'Could not check old photos.'; }
+  finally { opShopPhotoBusy = false; opShopPhotoCount(); }
+}
 function opRenderPartnersList() {
+  if (Date.now() - opShopPhotoLastCount > 60000) { opShopPhotoLastCount = Date.now(); opShopPhotoCount(); }
   const wrap = document.getElementById('op-partners-list');
   if (!wrap) return;
   const q = (document.getElementById('op-partners-search').value || '').toLowerCase();
@@ -14349,7 +16342,7 @@ async function opCreateShop() {
   const location = document.getElementById('op-as-location').value.trim();
   const gst = document.getElementById('op-as-gst').value.trim();
   const category = document.getElementById('op-as-category').value.trim();
-  const username = document.getElementById('op-as-username').value.trim();
+  const username = document.getElementById('op-as-username').value.trim().toLowerCase();
   const password = document.getElementById('op-as-password').value;
   if (!name || !address || !username || !password) { fail('Fill shop name, address, username and password.'); return; }
   if (/[.#$\[\]\/\s]/.test(username)) { fail('Username cannot have spaces or . # $ [ ] /'); return; }
@@ -14360,7 +16353,9 @@ async function opCreateShop() {
   try {
     const { db, ref, get, set, update } = window.fb;
     const snap = await get(ref(db, 'restaurants/' + username));
-    if (snap.exists()) { fail('This username is already taken.'); btn.disabled = false; return; }
+    let taken = snap.exists();
+    if (!taken) { try { const ix = await get(ref(db, 'shopIds')); if (ix.exists()) taken = Object.keys(ix.val() || {}).some(k => k.toLowerCase() === username); } catch (e) {} }
+    if (taken) { fail('This username is already taken.'); btn.disabled = false; return; }
     const record = {
       restaurantName: name, address, location, gst,
       username, password, businessType,
@@ -14371,7 +16366,14 @@ async function opCreateShop() {
     };
     if (businessType === 'online_shop' && category) record.opCategory = category;
     if (businessType === 'groceries') record.goSeries = true;
-    await set(ref(db, 'restaurants/' + username), record);
+    // Create only if nobody else got this username in the meantime (transaction); fall back to a plain write if transactions are not allowed.
+    let created = false;
+    try {
+      const tr = await window.fb.runTransaction(ref(db, 'restaurants/' + username), cur => (cur === null ? record : undefined));
+      if (!tr.committed) { fail('This username is already taken.'); btn.disabled = false; return; }
+      created = true;
+    } catch (e) { created = false; }
+    if (!created) await set(ref(db, 'restaurants/' + username), record);
     try { const f = window.fb; f.get(f.ref(f.db, 'shopIds')).then(sn => { if (sn.exists()) return f.update(f.ref(f.db, 'shopIds'), { [username]: true }); }).catch(() => {}); } catch (e) {} // only once the index has been created by the Operator Panel
     // Groceries shops go into the zone their location falls inside (same as approving one).
     let zoneMsg = '';
@@ -15198,9 +17200,12 @@ function handleOpShopPhotoSelect(e) {
         const blob = await resizeImageToBlob(img, 800, 0.7);
         const url = await uploadPhotoToCloudinary(blob);
         const { db, ref, update } = window.fb;
+        const pOld = opAllPartners.find(x => x._id === partnerId);
+        const oldPhoto = pOld ? pOld.photo : '';
         await update(ref(db, 'restaurants/' + partnerId), { photo: url });
         const p = opAllPartners.find(x => x._id === partnerId);
         if (p) p.photo = url;
+        nshPhotoChanged(oldPhoto, url);
         if (opCurrentPartnerId === partnerId) opRenderShopPhoto(url, true);
         status.textContent = 'Shop photo updated.';
       } catch (err) {
@@ -15220,9 +17225,11 @@ function opRemoveShopPhoto() {
   opRenderShopPhoto("");
   status.textContent = 'Removing...';
   const { db, ref, update } = window.fb;
+  const oldPhotoRm = (opAllPartners.find(x => x._id === partnerId) || {}).photo;
   update(ref(db, 'restaurants/' + partnerId), { photo: null }).then(() => {
     const p = opAllPartners.find(x => x._id === partnerId);
     if (p) p.photo = null;
+    nshPhotoChanged(oldPhotoRm, '');
     status.textContent = 'Shop photo removed.';
   }).catch(err => { status.textContent = 'Error: ' + err.message; });
 }
@@ -15450,6 +17457,7 @@ function neshHandleBack() {
     return 'stay';
   }
   if (neshIsShown('reason-modal-overlay')) { closeReasonModal(); return 'stay'; }
+  if (neshIsShown('pvchat-container')) { pvcpBack(); return 'stay'; }
   if (neshIsShown('support-chat-container')) {
     const b = document.getElementById('support-chat-back');
     if (b) b.click(); else document.getElementById('support-chat-container').classList.remove('show');
@@ -15524,7 +17532,7 @@ function neshDoubleBackExit() {
 var opPostersCache = [];
 // Shop picker for "tap poster -> open this shop". Uses the shop list the panel already loads (opAllPartners) - no extra database read.
 // ONE picker for "tap poster -> open ...": either a home card or a shop. Card values are stored as 'card:<id>'.
-var OP_POSTER_CARDS = [['food','🍔 Food'],['groceries','🛒 Groceries'],['online-shop','🛍️ NESH Mart'],['taxi','🚕 Taxi'],['bus','🚌 Bus']];
+var OP_POSTER_CARDS = [['food','🍔 Food'],['groceries','🛒 Groceries'],['online-shop','🛍️ NESH Mart'],['taxi','🚕 Taxi'],['bus','🚌 Bus'],['pravasi','🎁 Pravasi Hampers']];
 function opFillShopSelect(sel, selectedId) {
   if (!sel) return;
   var shops = (typeof opAllPartners !== 'undefined' && opAllPartners ? opAllPartners : [])
@@ -16005,6 +18013,42 @@ function opLsDelete() {
   var fb = window.fb; if (!fb) return;
   if (!confirm('Remove the Groceries reward? Customers will no longer see it.')) return;
   fb.remove(fb.ref(fb.db, 'app_config/loyaltyStore')).then(function () { opLsMsg('Removed.'); }).catch(function (e) { opLsMsg('Error: ' + ((e && e.message) || '')); });
+}
+/* ---- REFER & EARN (operator) ---- app_config/referral = { on, value, minOrder, minFirst, maxRewards, link, ts } */
+function opRefMsg(t) { var e = document.getElementById('op-ref-status'); if (e) e.textContent = t || ''; }
+function opRefLoad() {
+  var fb = window.fb; if (!fb) return;
+  fb.get(fb.ref(fb.db, 'app_config/referral')).then(function (snap) {
+    var v = snap.val(); if (!v) { opRefMsg('Not set up yet. Enter the reward amount and save.'); return; }
+    document.getElementById('op-ref-on').checked = v.on !== false;
+    document.getElementById('op-ref-value').value = v.value || '';
+    document.getElementById('op-ref-min').value = v.minOrder || '';
+    document.getElementById('op-ref-minfirst').value = v.minFirst || '';
+    document.getElementById('op-ref-max').value = v.maxRewards || '';
+    document.getElementById('op-ref-link').value = v.link || '';
+    opRefMsg(v.on === false ? 'Saved, but currently OFF.' : (Number(v.value) > 0 ? 'Live ✅ — reward ₹' + v.value : 'Reward amount is 0, so it is OFF.'));
+  }).catch(function () { opRefMsg('Could not load.'); });
+}
+function opRefSave() {
+  var fb = window.fb; if (!fb) { opRefMsg('Not connected yet, try again.'); return; }
+  var value = Math.round((parseFloat(document.getElementById('op-ref-value').value) || 0) * 100) / 100;
+  if (!(value > 0)) { opRefMsg('Enter the reward amount in ₹ (more than 0). To stop it, untick ON.'); return; }
+  var link = document.getElementById('op-ref-link').value.trim();
+  if (link && !/^https?:\/\//i.test(link)) { opRefMsg('The share link must start with http:// or https://'); return; }
+  var max = Math.floor(parseFloat(document.getElementById('op-ref-max').value) || 20);
+  if (max < 1) max = 1; if (max > 500) max = 500;
+  opRefMsg('Saving...');
+  fb.set(fb.ref(fb.db, 'app_config/referral'), {
+    on: document.getElementById('op-ref-on').checked, value: value,
+    minOrder: Math.max(0, parseFloat(document.getElementById('op-ref-min').value) || 0),
+    minFirst: Math.max(0, parseFloat(document.getElementById('op-ref-minfirst').value) || 0),
+    maxRewards: max, link: link, ts: Date.now()
+  }).then(function () { opRefMsg('Saved ✅ — customers see it now (Food home).'); }).catch(function (e) { opRefMsg('Error: ' + ((e && e.message) || 'could not save')); });
+}
+function opRefDelete() {
+  var fb = window.fb; if (!fb) return;
+  if (!confirm('Remove Refer & Earn? Customers will no longer see it. Rewards they already earned are kept but cannot be used until you set it up again.')) return;
+  fb.remove(fb.ref(fb.db, 'app_config/referral')).then(function () { opRefMsg('Removed.'); }).catch(function (e) { opRefMsg('Error: ' + ((e && e.message) || '')); });
 }
 
 /* ---- LOYALTY REWARD (operator) ----
